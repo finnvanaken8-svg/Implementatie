@@ -1,0 +1,3463 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volledig implementatieplan · CO₂-data ontsluiten · Rensa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,200..700,0..100&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:    #fafaf6;
+  --ink:      #0a0a0a;
+  --ink-soft: #4a4a4a;
+  --ink-mute: #8a8a85;
+  --rule:     #d8d8d3;
+  --rule-soft:#e8e8e3;
+  --surface:  #f0efe9;
+  --red:      #e30613;
+  --red-deep: #b30410;
+  --display:  'Fraunces', Georgia, serif;
+  --body:     'Inter', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── ICONS ── */
+.icon {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  color: var(--red);
+  flex-shrink: 0;
+}
+.icon-sm { width: 20px; height: 20px; }
+.icon-lg { width: 36px; height: 36px; }
+
+/* ── RENSA LOGO ── */
+.rensa-logo {
+  display: block;
+}
+.rensa-logo .word {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  fill: var(--red);
+}
+.rensa-logo .tagline {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 400;
+  fill: var(--red);
+  letter-spacing: 0.4em;
+}
+.rensa-logo .rule {
+  stroke: var(--red);
+  stroke-width: 1.2;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 300px;
+  height: 100vh;
+  border-right: 1px solid var(--rule);
+  padding: 36px 36px 32px;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  z-index: 50;
+}
+.brand-block { margin-bottom: 48px; }
+.brand-block .rensa-logo { width: 200px; height: auto; margin-bottom: 18px; }
+.brand-line {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 400;
+  font-variation-settings: "opsz" 14;
+  color: var(--ink-mute);
+  font-style: italic;
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+}
+.brand-doc {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.s-nav { flex: 1; border-top: 1px solid var(--rule); }
+.s-tab {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  padding: 16px 0;
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border: none;
+  background: none;
+  text-align: left;
+  width: 100%;
+  border-bottom: 1px solid var(--rule);
+  transition: color 0.25s, padding-left 0.25s;
+  position: relative;
+}
+.s-tab-num {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  font-variation-settings: "opsz" 14;
+  width: 22px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.s-tab:hover { color: var(--ink); padding-left: 6px; }
+.s-tab:hover .s-tab-num { color: var(--ink); }
+.s-tab.active { color: var(--red); font-weight: 600; }
+.s-tab.active .s-tab-num { color: var(--red); }
+.s-tab.active::before {
+  content: '';
+  position: absolute;
+  left: -36px; top: 0; bottom: -1px;
+  width: 2px;
+  background: var(--red);
+}
+.s-foot {
+  font-family: var(--body);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  border-top: 1px solid var(--rule);
+  padding-top: 18px;
+  line-height: 1.7;
+}
+.s-foot strong { color: var(--ink); font-weight: 600; }
+
+/* ── MOBILE ── */
+.mobile-bar {
+  display: none;
+  position: sticky; top: 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 20px;
+  z-index: 60;
+  align-items: center;
+  justify-content: space-between;
+}
+.mobile-bar .rensa-logo { width: 90px; height: auto; }
+.mobile-current {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  font-style: italic;
+}
+.mobile-toggle {
+  background: none; border: 1px solid var(--rule); border-radius: 2px;
+  padding: 6px 10px; font-size: 11px; font-family: var(--body); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); cursor: pointer;
+}
+
+/* ── MAIN ── */
+main { margin-left: 300px; min-height: 100vh; }
+.page { display: none; animation: fadeUp 0.6s cubic-bezier(0.2, 0, 0.2, 1); }
+.page.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── HERO ── */
+.hero {
+  padding: 80px 80px 60px;
+  position: relative;
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+}
+.hero-meta {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 56px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.hero-meta-mark { color: var(--red); }
+.hero-num {
+  position: absolute;
+  top: 60px;
+  right: 60px;
+  font-family: var(--display);
+  font-size: clamp(120px, 22vw, 280px);
+  font-weight: 200;
+  font-variation-settings: "opsz" 144, "SOFT" 100;
+  line-height: 0.85;
+  color: var(--rule-soft);
+  letter-spacing: -0.05em;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-content { position: relative; z-index: 1; max-width: 900px; }
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(48px, 7vw, 96px);
+  font-weight: 300;
+  font-variation-settings: "opsz" 144;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin-bottom: 32px;
+  color: var(--ink);
+}
+.hero-title em { font-style: italic; font-weight: 400; color: var(--red); }
+.hero-title strong { font-style: italic; font-weight: 400; }
+.hero-lead {
+  font-family: var(--body);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 620px;
+}
+.hero-lead-sub {
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  max-width: 620px;
+  margin-top: 18px;
+}
+.hero-contact {
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-mute);
+  max-width: 620px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.hero-contact a {
+  color: var(--red);
+  text-decoration: none;
+  border-bottom: 1px solid var(--red);
+}
+.hero-contact a:hover { color: var(--red-deep); border-color: var(--red-deep); }
+
+/* Corner mark - rode driehoek met VR */
+.corner-mark {
+  position: absolute;
+  top: 0; right: 0;
+  width: 110px; height: 220px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Welkom: Hero met afbeelding */
+.welkom-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--rule);
+  min-height: 600px;
+  position: relative;
+  overflow: hidden;
+}
+.welkom-hero-text {
+  padding: 80px 60px 60px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.welkom-hero-visual {
+  position: relative;
+  background: var(--ink);
+  overflow: hidden;
+}
+.welkom-hero-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(40%) contrast(105%) brightness(0.85);
+  display: block;
+}
+.welkom-hero-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(227,6,19,0.35) 0%, rgba(10,10,10,0.4) 100%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.welkom-hero-stamp {
+  position: absolute;
+  bottom: 40px; left: 40px;
+  z-index: 3;
+  color: var(--paper);
+}
+.welkom-hero-stamp .rensa-logo { width: 180px; height: auto; }
+.welkom-hero-stamp .rensa-logo .word { fill: var(--paper); }
+.welkom-hero-stamp .rensa-logo .tagline { fill: var(--paper); }
+.welkom-hero-stamp .rensa-logo .rule { stroke: var(--paper); }
+
+/* ── SECTION ── */
+.sec {
+  padding: 80px;
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+.sec-eyebrow {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sec-eyebrow::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: var(--red);
+}
+.sec-title {
+  font-family: var(--display);
+  font-size: clamp(32px, 4.5vw, 56px);
+  font-weight: 300;
+  font-variation-settings: "opsz" 144;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+  margin-bottom: 24px;
+  color: var(--ink);
+}
+.sec-title em { font-style: italic; font-weight: 400; color: var(--red); }
+.sec-title strong { font-style: italic; font-weight: 400; }
+.sec-lead {
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 720px;
+  margin-bottom: 56px;
+}
+
+/* Photo block voor visuele breaks */
+.photo-block {
+  margin: 60px 0;
+  position: relative;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.photo-block img {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(60%) contrast(105%);
+}
+.photo-caption {
+  position: absolute;
+  bottom: 24px; left: 24px;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--paper);
+  background: rgba(10,10,10,0.7);
+  padding: 8px 14px;
+  backdrop-filter: blur(6px);
+}
+.photo-block-tall img { height: 480px; }
+
+/* Photo strip - 3 photos in een rij */
+.photo-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 48px 0;
+}
+.photo-strip-item {
+  height: 240px;
+  overflow: hidden;
+  position: relative;
+}
+.photo-strip-item img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: grayscale(70%) contrast(105%);
+  transition: filter 0.4s, transform 0.6s;
+}
+.photo-strip-item:hover img {
+  filter: grayscale(0%);
+  transform: scale(1.04);
+}
+.photo-strip-label {
+  position: absolute;
+  bottom: 14px; left: 14px;
+  font-family: var(--body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--red);
+  padding: 4px 10px;
+}
+
+/* ── THREE-UP met icons ── */
+.three-up {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  margin-bottom: 32px;
+}
+.four-up {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin-bottom: 32px;
+}
+.four-up > div { padding-top: 28px; border-top: 2px solid var(--ink); }
+.four-up h3 {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 400;
+  font-variation-settings: "opsz" 60;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+.four-up p {
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.three-up > div { padding-top: 28px; border-top: 2px solid var(--ink); }
+.tu-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.tu-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.three-up h3 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  font-variation-settings: "opsz" 60;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+  color: var(--ink);
+}
+.three-up p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+/* ── BIG STAT ── */
+.bigstats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  margin-bottom: 32px;
+}
+.bigstat { padding: 48px 0; border-bottom: 1px solid var(--rule); }
+.bigstat:nth-child(1) { padding-right: 48px; border-right: 1px solid var(--rule); }
+.bigstat:nth-child(2) { padding-left: 48px; }
+.bs-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bs-tag .icon { width: 18px; height: 18px; color: var(--red); }
+.bs-num {
+  font-family: var(--display);
+  font-size: clamp(64px, 9vw, 124px);
+  font-weight: 200;
+  font-variation-settings: "opsz" 144;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.bs-num em { font-style: italic; font-weight: 300; color: var(--red); }
+.bs-desc {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 460px;
+}
+
+/* ── PULL QUOTE ── */
+.pull {
+  padding: 64px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin: 48px 0;
+  position: relative;
+}
+.pull-text {
+  font-family: var(--display);
+  font-size: clamp(26px, 3.5vw, 42px);
+  font-weight: 300;
+  font-style: italic;
+  font-variation-settings: "opsz" 144;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  max-width: 1000px;
+}
+.pull-text::before { content: '"'; color: var(--red); font-style: normal; margin-right: 4px; }
+.pull-text::after  { content: '"'; color: var(--red); font-style: normal; margin-left: 4px; }
+.pull-source {
+  margin-top: 28px;
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+/* ── STATEMENT ── */
+.statement {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 80px 60px;
+  margin: 56px 0;
+  position: relative;
+  overflow: hidden;
+}
+.statement::after {
+  content: '';
+  position: absolute;
+  top: 30px; right: 40px;
+  width: 32px; height: 4px;
+  background: var(--red);
+}
+.statement-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 32px;
+  display: flex; align-items: center; gap: 10px;
+}
+.statement-tag .icon { color: var(--red); width: 20px; height: 20px; }
+.statement h3 {
+  font-family: var(--display);
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 300;
+  font-variation-settings: "opsz" 144;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  margin-bottom: 28px;
+  max-width: 900px;
+}
+.statement h3 em { font-style: italic; font-weight: 400; color: var(--red); }
+.statement p {
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(250,250,246,0.78);
+  max-width: 680px;
+}
+
+/* ── PROBLEM ── */
+.problem {
+  border-top: 1px solid var(--rule);
+  padding: 40px 0;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 60px;
+  margin-bottom: 24px;
+}
+.problem-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.problem-tag .icon { color: var(--ink-mute); width: 18px; height: 18px; }
+.problem h4 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  font-variation-settings: "opsz" 60;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+.problem ul { list-style: none; }
+.problem li {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  padding: 6px 0 6px 24px;
+  position: relative;
+}
+.problem li::before {
+  content: '×';
+  position: absolute; left: 0;
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* ── PRESSURE ── */
+.pressure {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 2px solid var(--ink);
+  margin-top: 32px;
+}
+.pressure-col {
+  padding: 32px 32px 32px 0;
+  border-right: 1px solid var(--rule);
+}
+.pressure-col:nth-child(2) { padding-left: 32px; }
+.pressure-col:nth-child(3) { padding-left: 32px; border-right: none; }
+.pressure-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.pressure-num {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 300;
+  font-variation-settings: "opsz" 60;
+  line-height: 0.9;
+  color: var(--red);
+  letter-spacing: -0.02em;
+}
+.pressure-icon {
+  width: 32px; height: 32px;
+  color: var(--red);
+}
+.pressure h4 {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  letter-spacing: -0.005em;
+}
+.pressure p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ── COMPETE ── */
+.compete { border-top: 2px solid var(--ink); }
+.compete-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 100px;
+  gap: 32px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.compete-name {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+.compete-row.is-rensa .compete-name { color: var(--red); display:flex; align-items:baseline; gap:12px; }
+.compete-desc {
+  font-family: var(--body);
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.compete-status {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: right;
+}
+.compete-status.live { color: var(--ink); }
+.compete-status.partial { color: var(--ink-mute); }
+.compete-status.behind { color: var(--red); }
+
+/* ── COST GRID ── */
+.cost-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin-top: 32px;
+}
+.cost-cell { background: var(--paper); padding: 36px 32px; }
+.cost-icon-wrap {
+  width: 52px; height: 52px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-bottom: 24px;
+}
+.cost-icon-wrap .icon { color: var(--red); width: 24px; height: 24px; }
+.cost-cell h4 {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 400;
+  margin-bottom: 12px;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.cost-cell p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ── KERNWAARDEN ── */
+.values-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.value-cell { padding: 40px 0; border-bottom: 1px solid var(--rule); }
+.value-cell:nth-child(odd) { padding-right: 40px; border-right: 1px solid var(--rule); }
+.value-cell:nth-child(even) { padding-left: 40px; }
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+.value-num-wrap {
+  width: 48px; height: 48px;
+  border: 2px solid var(--red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.value-num-wrap .icon { color: var(--red); width: 22px; height: 22px; }
+.value-cell h4 {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.value-sub {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 14px;
+  padding-left: 68px;
+}
+.value-cell p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  padding-left: 68px;
+  max-width: 540px;
+}
+
+/* ── BINARY ── */
+.binary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  margin-top: 32px;
+}
+.binary > div { padding: 48px 0; }
+.binary > div:first-child { padding-right: 48px; border-right: 1px solid var(--rule); }
+.binary > div:last-child { padding-left: 48px; }
+.binary-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.binary-tag.dont { color: var(--red); }
+.binary-tag .icon { width: 18px; height: 18px; }
+.binary-tag.dont .icon { color: var(--red); }
+.binary h4 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 24px;
+}
+.binary ul { list-style: none; }
+.binary li {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  padding: 12px 0 12px 24px;
+  position: relative;
+  border-top: 1px solid var(--rule-soft);
+}
+.binary li:first-child { border-top: none; padding-top: 4px; }
+.binary li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 22px;
+  width: 12px; height: 1px;
+  background: var(--ink);
+}
+.binary li:first-child::before { top: 14px; }
+.binary.dont li::before { background: var(--red); }
+
+/* ── FINDINGS ── */
+.findings { border-top: 2px solid var(--ink); }
+.finding {
+  border-bottom: 1px solid var(--rule);
+  padding: 36px 0;
+  display: grid;
+  grid-template-columns: 100px 1fr 40px;
+  gap: 40px;
+  cursor: pointer;
+  align-items: start;
+  transition: padding 0.25s;
+}
+.finding:hover { padding-left: 8px; }
+.finding-num {
+  font-family: var(--display);
+  font-size: 60px;
+  font-weight: 200;
+  font-variation-settings: "opsz" 144;
+  line-height: 0.85;
+  color: var(--red);
+  letter-spacing: -0.04em;
+}
+.finding-content h3 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+.finding-content > p {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.finding-toggle {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 200;
+  color: var(--red);
+  line-height: 1;
+  user-select: none;
+  transition: transform 0.3s;
+}
+.finding.open .finding-toggle { transform: rotate(45deg); }
+.finding-extra {
+  display: none;
+  grid-column: 2 / 3;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--rule);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.finding.open .finding-extra { display: block; }
+.finding-extra strong { color: var(--ink); font-weight: 600; }
+
+/* ── GAP ── */
+.gap { border-top: 2px solid var(--ink); margin-top: 32px; }
+.gap-row {
+  border-bottom: 1px solid var(--rule);
+  padding: 28px 0;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 240px 1fr 40px;
+  gap: 40px;
+  align-items: center;
+  transition: padding 0.25s;
+}
+.gap-row:hover { padding-left: 8px; }
+.gap-theme h4 {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  margin-bottom: 4px;
+}
+.gap-theme p {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.gap-line { position: relative; height: 36px; }
+.gap-line::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: var(--rule);
+}
+.gap-marker {
+  position: absolute;
+  top: 50%;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: left 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.gap-marker.demand { background: var(--red); }
+.gap-marker.supply { background: var(--ink); }
+.gap-marker-tag {
+  position: absolute;
+  font-family: var(--body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.gap-marker.demand .gap-marker-tag { top: -16px; left: 50%; transform: translateX(-50%); color: var(--red); }
+.gap-marker.supply .gap-marker-tag { bottom: -16px; left: 50%; transform: translateX(-50%); color: var(--ink); }
+.gap-toggle {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 200;
+  color: var(--red);
+  text-align: right;
+  transition: transform 0.3s;
+}
+.gap-row.open .gap-toggle { transform: rotate(45deg); }
+.gap-detail {
+  display: none;
+  grid-column: 1 / 4;
+  margin-top: 20px;
+  padding: 20px 24px;
+  background: var(--surface);
+  border-left: 2px solid var(--red);
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+.gap-row.open .gap-detail { display: block; }
+.gap-detail strong { color: var(--ink); font-weight: 600; }
+.gap-legend {
+  display: flex;
+  gap: 32px;
+  padding-top: 20px;
+  font-family: var(--body);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  align-items: center;
+}
+.gap-legend-item { display: flex; align-items: center; gap: 10px; }
+.gap-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── QUOTES ── */
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  margin-top: 32px;
+}
+.q-cell {
+  padding: 40px 32px 40px 0;
+  border-bottom: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+}
+.q-cell:nth-child(3n) { border-right: none; padding-right: 0; }
+.q-cell:nth-child(3n+2) { padding-left: 32px; padding-right: 32px; }
+.q-cell:nth-child(3n+1) { padding-right: 32px; }
+.q-cell p {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  font-variation-settings: "opsz" 60;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+.q-label {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 14px;
+}
+.q-cell p::before { content: '"'; color: var(--red); font-style: normal; }
+.q-cell p::after  { content: '"'; color: var(--red); font-style: normal; }
+.q-cell .src {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+/* ── METHOD ── */
+.method-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 56px;
+}
+.ms-cell { padding: 36px 28px; border-right: 1px solid var(--rule); }
+.ms-cell:last-child { border-right: none; }
+.ms-cell.accent { background: var(--surface); }
+.ms-icon { color: var(--red); margin-bottom: 18px; width: 28px; height: 28px; }
+.ms-cell.accent .ms-icon { color: var(--red); }
+.ms-num {
+  font-family: var(--display);
+  font-size: 56px;
+  font-weight: 200;
+  font-variation-settings: "opsz" 144;
+  line-height: 0.9;
+  color: var(--ink);
+  margin-bottom: 14px;
+  letter-spacing: -0.04em;
+}
+.ms-cell.accent .ms-num { color: var(--red); }
+.ms-label {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.method-step {
+  border-top: 1px solid var(--rule);
+  padding: 48px 0;
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.method-step:last-child { border-bottom: 1px solid var(--rule); }
+.ms-num-big {
+  font-family: var(--display);
+  font-size: 80px;
+  font-weight: 200;
+  font-variation-settings: "opsz" 144;
+  line-height: 0.85;
+  color: var(--red);
+  letter-spacing: -0.04em;
+}
+.method-step h4 {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.method-step h4 .icon { width: 24px; height: 24px; color: var(--red); flex-shrink: 0; }
+.method-step > div > p {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  max-width: 720px;
+  margin-bottom: 20px;
+}
+.method-step ul { list-style: none; }
+.method-step li {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  padding: 6px 0 6px 24px;
+  position: relative;
+}
+.method-step li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 16px;
+  width: 12px; height: 1px;
+  background: var(--ink-mute);
+}
+
+/* ── REPR ── */
+.repr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.repr-cell { padding: 36px 0; border-bottom: 1px solid var(--rule); }
+.repr-cell:nth-child(odd) { padding-right: 36px; border-right: 1px solid var(--rule); }
+.repr-cell:nth-child(even) { padding-left: 36px; }
+.repr-mark {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--red);
+  margin-bottom: 14px;
+  letter-spacing: 0.04em;
+}
+.repr-cell h4 {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+.repr-cell p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+/* ── LIMITS ── */
+.limits { border-top: 1px solid var(--rule); margin-top: 32px; }
+.limit-row {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 32px;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: start;
+}
+.limit-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-mute);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-mute);
+}
+.limit-icon .icon { width: 18px; height: 18px; }
+.limit-row h4 {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.limit-row p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 700px;
+}
+
+/* ── CONCLUSIONS ── */
+.conclusions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  margin-top: 40px;
+}
+.conc-cell { background: var(--ink); color: var(--paper); padding: 40px 36px; }
+.conc-cell:last-child { background: var(--red); }
+.conc-icon { color: var(--red); width: 28px; height: 28px; margin-bottom: 18px; }
+.conc-cell:last-child .conc-icon { color: rgba(250,250,246,0.95); }
+.conc-num {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 16px;
+}
+.conc-cell:last-child .conc-num { color: rgba(250,250,246,0.85); }
+.conc-cell h4 {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin-bottom: 14px;
+}
+.conc-cell p {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(250,250,246,0.78);
+}
+.conc-cell:last-child p { color: rgba(250,250,246,0.92); }
+
+/* ── NAV BOTTOM ── */
+.nav-bottom {
+  padding: 60px 80px 80px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+}
+.nav-link {
+  flex: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--body);
+  padding: 0;
+  color: var(--ink-soft);
+  transition: color 0.2s;
+}
+.nav-link:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-link.next { text-align: right; }
+.nav-link-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 8px;
+  display: block;
+}
+.nav-link-name {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 400;
+  font-variation-settings: "opsz" 60;
+  letter-spacing: -0.01em;
+  font-style: italic;
+}
+.nav-link:hover:not(:disabled) { color: var(--red); }
+.nav-link:hover:not(:disabled) .nav-link-tag { color: var(--red); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .mobile-bar { display: flex; }
+  main { margin-left: 0; }
+  .hero, .sec, .nav-bottom { padding: 48px 24px; }
+  .welkom-hero { grid-template-columns: 1fr; min-height: auto; }
+  .welkom-hero-text { padding: 48px 24px 32px; }
+  .welkom-hero-visual { height: 320px; }
+  .hero-num { font-size: 32vw; right: 20px; top: 30px; }
+  .three-up { grid-template-columns: 1fr; gap: 32px; }
+  .four-up { grid-template-columns: 1fr; gap: 28px; }
+  .bigstats { grid-template-columns: 1fr; }
+  .bigstat:nth-child(1) { padding-right: 0; border-right: none; padding-bottom: 32px; }
+  .bigstat:nth-child(2) { padding-left: 0; padding-top: 32px; }
+  .pressure { grid-template-columns: 1fr; border-top: 1px solid var(--rule); }
+  .pressure-col { padding: 28px 0; border-right: none; border-bottom: 1px solid var(--rule); }
+  .compete-row { grid-template-columns: 1fr; gap: 8px; }
+  .cost-grid { grid-template-columns: 1fr; }
+  .values-grid { grid-template-columns: 1fr; }
+  .value-cell:nth-child(odd), .value-cell:nth-child(even) { padding: 32px 0; border-right: none; }
+  .value-sub, .value-cell p { padding-left: 0; }
+  .binary { grid-template-columns: 1fr; }
+  .binary > div:first-child { padding-right: 0; padding-bottom: 32px; border-right: none; border-bottom: 1px solid var(--rule); }
+  .binary > div:last-child { padding-left: 0; padding-top: 32px; }
+  .finding { grid-template-columns: 60px 1fr 32px; gap: 16px; }
+  .finding-num { font-size: 36px; }
+  .gap-row { grid-template-columns: 1fr; gap: 16px; }
+  .quote-grid { grid-template-columns: 1fr; }
+  .q-cell { padding: 28px 0 !important; border-right: none; }
+  .method-summary { grid-template-columns: 1fr 1fr; }
+  .method-step { grid-template-columns: 1fr; gap: 20px; }
+  .ms-num-big { font-size: 56px; }
+  .photo-strip { grid-template-columns: 1fr; }
+  .repr { grid-template-columns: 1fr; }
+  .repr-cell:nth-child(odd), .repr-cell:nth-child(even) { padding: 28px 0; border-right: none; }
+  .conclusions { grid-template-columns: 1fr; }
+  .nav-bottom { flex-direction: column; gap: 24px; align-items: stretch; }
+  .nav-link.next { text-align: left; }
+  .mobile-menu.open { display: block !important; }
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 60px; left: 0; right: 0; bottom: 0;
+    background: var(--paper);
+    z-index: 100;
+    padding: 32px 24px;
+    overflow-y: auto;
+  }
+}
+
+/* ── ROUTE MATRIX ── */
+.rmatrix { border-top: 2px solid var(--ink); margin-top: 32px; }
+.rmatrix-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--rule);
+  align-items: stretch;
+}
+.rmatrix-head { border-bottom: 1px solid var(--ink); }
+.rmatrix-head .rmatrix-cell {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  align-items: center;
+  justify-content: center;
+}
+.rmatrix-crit {
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 18px 16px 18px 0;
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+}
+.rmatrix-head .rmatrix-crit {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.rmatrix-cell {
+  padding: 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-left: 1px solid var(--rule-soft);
+}
+.rmatrix-rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.rmatrix-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.rate-sterk { color: var(--ink); }
+.rate-sterk .rmatrix-dot { background: var(--ink); }
+.rate-matig { color: var(--ink-mute); }
+.rate-matig .rmatrix-dot { background: var(--ink-mute); }
+.rate-zwak { color: var(--red); }
+.rate-zwak .rmatrix-dot { background: var(--red); }
+.rate-na { color: var(--ink-mute); }
+.rate-na .rmatrix-dot { background: transparent; border: 1px solid var(--rule); }
+.rmatrix-legend {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding-top: 22px;
+  font-family: var(--body);
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+.rmatrix-legend-item { display: flex; align-items: center; gap: 10px; }
+
+/* ── ROADMAP ── */
+.roadmap { margin: 32px 0 8px; }
+.roadmap-track {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.roadmap-phase {
+  border-top: 3px solid var(--red);
+  padding: 18px 18px 22px;
+  background: var(--surface);
+  position: relative;
+}
+.roadmap-phase .rp-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 10px;
+}
+.roadmap-phase h4 {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.roadmap-phase p {
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.roadmap-arrow {
+  position: absolute;
+  top: 50%; right: -13px;
+  transform: translateY(-50%);
+  width: 18px; height: 18px;
+  color: var(--red);
+  z-index: 2;
+}
+.roadmap-foundation {
+  margin-top: 14px;
+  border: 1px dashed var(--rule);
+  border-left: 3px solid var(--ink);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--paper);
+}
+.roadmap-foundation .rf-tag {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.roadmap-foundation p {
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Schoon paragraafje binnen een problem-blok */
+.problem-note {
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 640px;
+}
+
+/* Responsive voor matrix en roadmap */
+@media (max-width: 900px) {
+  .rmatrix-row { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
+  .rmatrix-crit { font-size: 12px; padding: 13px 8px 13px 0; }
+  .rmatrix-cell { padding: 12px 4px; }
+  .rmatrix-rate { flex-direction: column; gap: 5px; font-size: 9px; }
+  .rmatrix-head .rmatrix-cell { padding: 12px 4px; font-size: 10px; letter-spacing: 0.04em; }
+  .roadmap-track { grid-template-columns: 1fr; gap: 10px; }
+  .roadmap-arrow { display: none; }
+  .roadmap-foundation { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+
+/* ── ROLE LEESWIJZER ── */
+.roles-wrap { margin-top: 32px; }
+.role-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+.role-pill {
+  font-family: var(--body); font-size: 14px; font-weight: 500; color: var(--ink-soft);
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 100px;
+  padding: 10px 18px; cursor: pointer; transition: all .15s ease;
+}
+.role-pill:hover { border-color: var(--ink-mute); color: var(--ink); }
+.role-pill.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.role-panel { border-top: 2px solid var(--ink); padding-top: 28px; min-height: 120px; }
+.role-why { font-family: var(--display); font-size: 22px; line-height: 1.4; color: var(--ink); font-weight: 400; max-width: 760px; margin-bottom: 26px; }
+.role-ch-label { font-family: var(--body); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); margin-bottom: 14px; }
+.role-chapters { display: flex; flex-wrap: wrap; gap: 12px; }
+.chapter-chip {
+  display: inline-flex; align-items: center; gap: 12px; cursor: pointer;
+  font-family: var(--body); font-size: 15px; font-weight: 500; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--red);
+  padding: 12px 18px; transition: all .15s ease; text-align: left;
+}
+.chapter-chip:hover { background: var(--paper); border-color: var(--ink-mute); border-left-color: var(--red); transform: translateX(2px); }
+.cc-num { font-family: var(--body); font-size: 12px; font-weight: 700; color: var(--red); letter-spacing: 0.06em; }
+@media (max-width: 900px) {
+  .role-why { font-size: 19px; }
+  .chapter-chip { width: 100%; }
+}
+/* ── BEGRIP-TOOLTIPS ── */
+.tt {
+  cursor: help;
+  border-bottom: 1px dotted var(--ink-mute);
+  display: inline;
+  position: relative;
+}
+.tt::after {
+  content: attr(data-tt);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--red);
+  color: var(--ink-soft);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 400;
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.55;
+  padding: 10px 14px;
+  width: 260px;
+  white-space: normal;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 200;
+}
+.tt:hover::after { opacity: 1; }
+@media (max-width: 900px) {
+  .tt::after { width: 200px; font-size: 12px; left: 0; transform: none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- LOGO TEMPLATE (verstopt, hergebruikt via JS) -->
+<svg style="display:none">
+  <symbol id="logo-rensa" viewBox="0 0 240 80">
+    <text class="word" x="0" y="50" font-size="56">RENSA</text>
+    <line class="rule" x1="0" y1="59" x2="220" y2="59"/>
+    <text class="tagline" x="2" y="74" font-size="9.5">FAMILY COMPANY</text>
+  </symbol>
+</svg>
+
+<!-- MOBILE BAR -->
+<div class="mobile-bar">
+  <svg class="rensa-logo" viewBox="0 0 240 80"><use href="#logo-rensa"/></svg>
+  <span class="mobile-current" id="mobileCurrent">Welkom</span>
+  <button class="mobile-toggle" onclick="toggleMobileMenu()">Menu</button>
+</div>
+<div class="mobile-menu" id="mobileMenu"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="brand-block">
+    <svg class="rensa-logo" viewBox="0 0 240 80"><use href="#logo-rensa"/></svg>
+    <div class="brand-line">Volledig implementatieplan</div>
+    <div class="brand-doc">CO₂-data ontsluiten</div>
+  </div>
+  <nav class="s-nav">
+    <button class="s-tab active" data-tab="welkom"><span class="s-tab-num">01</span><span>Welkom</span></button>
+    <button class="s-tab" data-tab="samenvatting"><span class="s-tab-num">02</span><span>Managementsamenvatting</span></button>
+    <button class="s-tab" data-tab="waarde"><span class="s-tab-num">03</span><span>De waarde</span></button>
+    <button class="s-tab" data-tab="urgentie"><span class="s-tab-num">04</span><span>De urgentie</span></button>
+    <button class="s-tab" data-tab="rol"><span class="s-tab-num">05</span><span>Rensa's rol</span></button>
+    <button class="s-tab" data-tab="resultaten"><span class="s-tab-num">06</span><span>Resultaten</span></button>
+    <button class="s-tab" data-tab="routes"><span class="s-tab-num">07</span><span>De routes</span></button>
+    <button class="s-tab" data-tab="quickwins"><span class="s-tab-num">08</span><span>Quick wins</span></button>
+    <button class="s-tab" data-tab="plan"><span class="s-tab-num">09</span><span>Het plan</span></button>
+    <button class="s-tab" data-tab="verantwoording"><span class="s-tab-num">10</span><span>Verantwoording</span></button>
+  </nav>
+  <div class="s-foot">
+    <strong>Finn van Aken</strong><br>
+    Afstudeerstage<br>
+    Mei 2026
+  </div>
+</aside>
+
+<main>
+
+<!-- ════════ TAB 1: WELKOM ════════ -->
+<section class="page active" id="page-welkom">
+  <div class="welkom-hero">
+    <div class="welkom-hero-text">
+      <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 01 · Welkom</div>
+      <h1 class="hero-title">De <em>duurzame</em><br>keuze.</h1>
+      <p class="hero-lead">Waarom Rensa nu een rol moet pakken in het ontsluiten van CO₂-data richting klanten.</p>
+      <p class="hero-lead-sub">Dit document schetst eerst de situatie, wat er aan de hand is en waarom het een gemiste kans is dat er nog niks mee gebeurt.</p>
+      <p class="hero-lead-sub">Daarna volgt het concrete plan: welke routes Rensa kan nemen en hoe de uitvoering eruit ziet. Dat staat in hoofdstuk 07 (De routes) en hoofdstuk 09 (Het plan), met directe quick wins in hoofdstuk 08.</p>
+      <p class="hero-lead-sub">Waar het onderzoek op is gebaseerd en de bronnen die ik heb gebruikt staan in hoofdstuk 10, Verantwoording.</p>
+      <p class="hero-contact">Voor vragen of bronnen neem contact op met <a href="mailto:fvanaken@rensafamily.company">fvanaken@rensafamily.company</a></p>
+    </div>
+    <div class="welkom-hero-visual">
+      <img src="https://images.unsplash.com/photo-1581094288338-2314dddb7ece?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" alt="Industriële leidingen en installatietechniek">
+      <div class="welkom-hero-stamp">
+        <svg class="rensa-logo" viewBox="0 0 240 80"><use href="#logo-rensa"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Inhoudsopgave · 10 onderdelen</div>
+    <h2 class="sec-title">Opbouw van dit <em>document</em>.</h2>
+    <p class="sec-lead">De hoofdstukken bouwen van breed naar concreet. Eerst de waarde en urgentie, daarna de rol van Rensa en de onderzoeksresultaten. Vervolgens de routes die Rensa kan nemen, het concrete plan en tot slot de verantwoording.</p>
+
+    <div class="findings" style="border-top: 2px solid var(--ink);">
+      <div class="finding" onclick="showTab('samenvatting')">
+        <div class="finding-num">02</div>
+        <div class="finding-content">
+          <h3>Managementsamenvatting</h3>
+          <p>De kern in het kort, plus een leeswijzer die laat zien welke onderdelen voor welke rol of groep binnen Rensa het meest relevant zijn.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('waarde')">
+        <div class="finding-num">03</div>
+        <div class="finding-content">
+          <h3>De waarde</h3>
+          <p>Wat levert het ontsluiten van CO₂-data op voor klanten en voor Rensa zelf, en waarom is de huidige situatie niet genoeg.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('urgentie')">
+        <div class="finding-num">04</div>
+        <div class="finding-content">
+          <h3>De urgentie</h3>
+          <p>Waarom is dit een probleem waar Rensa nu actie in moet ondernemen, niet over een jaar of twee jaar.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('rol')">
+        <div class="finding-num">05</div>
+        <div class="finding-content">
+          <h3>Rensa's rol</h3>
+          <p>Waarom Rensa specifiek het voortouw moet nemen, gekoppeld aan de eigen kernwaarden en marktpositie.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('resultaten')">
+        <div class="finding-num">06</div>
+        <div class="finding-content">
+          <h3>Resultaten</h3>
+          <p>De belangrijkste bevindingen uit het onderzoek, met de kloof tussen vraag en aanbod als kern.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('routes')">
+        <div class="finding-num">07</div>
+        <div class="finding-content">
+          <h3>De routes</h3>
+          <p>De drie scenario’s die Rensa kan kiezen om data te ontsluiten, met de gevolgen van elke keuze en het fundament dat onder alle routes ligt.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('quickwins')">
+        <div class="finding-num">08</div>
+        <div class="finding-content">
+          <h3>Quick wins</h3>
+          <p>Twee dingen die Rensa nu al kan doen om zich op korte termijn te profileren: BigMile-transportdata en duurzame verpakking zichtbaar maken.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('plan')">
+        <div class="finding-num">09</div>
+        <div class="finding-content">
+          <h3>Het plan</h3>
+          <p>De concrete uitvoering: fasering, het kennisprogramma richting leveranciers, rolverdeling, randvoorwaarden, risico’s en de borging na afloop van de stage.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+      <div class="finding" onclick="showTab('verantwoording')">
+        <div class="finding-num">10</div>
+        <div class="finding-content">
+          <h3>Verantwoording</h3>
+          <p>Hoe ik tot deze conclusies ben gekomen en waarom de bevindingen representatief zijn voor de markt waarin Rensa opereert.</p>
+        </div>
+        <div class="finding-toggle">→</div>
+      </div>
+    </div>
+
+    <div class="statement">
+      <div class="statement-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,17 9,11 13,15 21,7"/><polyline points="14,7 21,7 21,14"/></svg>
+        Kernboodschap
+      </div>
+      <h3>Niet wachten,<br><em>voortrekken</em>.</h3>
+      <p>Klanten verwachten het. Concurrenten bewegen al. Regelgeving komt dichterbij. Wachten is geen neutrale keuze, maar een risico op achterstand.</p>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" disabled><span class="nav-link-tag">Vorige</span><span class="nav-link-name">—</span></button>
+    <button class="nav-link next" onclick="showTab('samenvatting')"><span class="nav-link-tag">02 · Volgende</span><span class="nav-link-name">Managementsamenvatting →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 2: MANAGEMENTSAMENVATTING ════════ -->
+<section class="page" id="page-samenvatting">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 02 · Managementsamenvatting</div>
+    <div class="hero-num">02</div>
+    <div class="hero-content">
+      <h1 class="hero-title">In het <em>kort</em>.</h1>
+      <p class="hero-lead">De kern van dit document in een oogopslag, met een leeswijzer die per rol binnen Rensa aanwijst welke onderdelen het meest relevant zijn.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">De essentie</div>
+    <h2 class="sec-title">De kern in vijf <em>punten</em>.</h2>
+    <p class="sec-lead">Klanten vragen steeds vaker om CO₂-, <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>- en <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>-data van producten. Rensa kan die data als neutrale tussenspeler ontsluiten in het bestaande aankoopproces, zonder zelf te rekenen of te labelen. Dat versterkt klantbehoud, marktpositie en de rol van Rensa in de keten.</p>
+
+    <div class="conclusions">
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="conc-num">De kans</div>
+        <h4>Een concrete klantvraag</h4>
+        <p>Een groeiende en concrete vraag naar productdata die Rensa kan invullen zonder grote koerswijziging.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <div class="conc-num">De aanbeveling</div>
+        <h4>Gefaseerd via route A</h4>
+        <p>Starten via een extern geverifieerd platform, met kennis en druk richting leveranciers als fundament en route B als achterdeur.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>
+        <div class="conc-num">De quick wins</div>
+        <h4>Toon bestaande sterktes</h4>
+        <p>Maak de BigMile-transportdata en het duurzame verpakkingssysteem nu al zichtbaar richting de klant.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        <div class="conc-num">Waarom nu</div>
+        <h4>De markt beweegt</h4>
+        <p>Concurrenten bewegen, regelgeving komt dichterbij en de klantvraag groeit. Eerst de beste, dan de grootste.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Leeswijzer</div>
+    <h2 class="sec-title">Wat is voor wie <em>relevant</em>?</h2>
+    <p class="sec-lead">Het advies is om het hele document te lezen, want de onderdelen versterken elkaar. Maar voor wie weinig tijd heeft of snel wil weten wat de kern is voor zijn of haar rol: klik op een groep binnen Rensa om te zien welke onderdelen het meest direct relevant zijn, en spring er naartoe.</p>
+
+    <div class="roles-wrap">
+      <div class="role-pills">
+        <button class="role-pill active" data-role="directie" onclick="selectRole('directie')">Directie en management</button>
+        <button class="role-pill" data-role="category" onclick="selectRole('category')">Category management en inkoop</button>
+        <button class="role-pill" data-role="it" onclick="selectRole('it')">IT, data en e-commerce</button>
+        <button class="role-pill" data-role="sales" onclick="selectRole('sales')">Sales en accountmanagement</button>
+        <button class="role-pill" data-role="duurzaamheid" onclick="selectRole('duurzaamheid')">Duurzaamheid</button>
+      </div>
+      <div class="role-panel" id="rolePanel"></div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('welkom')"><span class="nav-link-tag">01 · Vorige</span><span class="nav-link-name">← Welkom</span></button>
+    <button class="nav-link next" onclick="showTab('waarde')"><span class="nav-link-tag">03 · Volgende</span><span class="nav-link-name">De waarde →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 2: WAARDE ════════ -->
+<section class="page" id="page-waarde">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 03 · De waarde</div>
+    <div class="hero-num">03</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Wat <em>data ontsluiten</em><br>oplevert.</h1>
+      <p class="hero-lead">CO₂-data ontsluiten is geen losse compliance-actie. Het raakt klantbehoud, marktpositie en vertrouwen in de keten tegelijk.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Vier soorten waarde</div>
+    <h2 class="sec-title">Eén handeling, <em>vier soorten waarde</em>.</h2>
+    <p class="sec-lead">Het neutraal ontsluiten van productdata creëert waarde op vier niveaus. Deze heb ik hieronder uitgelicht.</p>
+
+    <div class="four-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">01 · Commercieel</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="1"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg>
+        </div>
+        <h3>Klantbehoud bij grote installateurs</h3>
+        <p>Grote installateurs hebben CO₂-data nodig voor eigen rapportage en aanbestedingen. Rensa blijft relevanter wanneer klanten deze data via hun bestaande inkoopproces krijgen.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">02 · Strategisch</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        </div>
+        <h3>Vooroplopen in markttransitie</h3>
+        <p>De sector beweegt naar datatransparantie. Wie nu processen, partners en datastromen opbouwt, voorkomt later een implementatie onder tijdsdruk.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">03 · Relationeel</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l4-4 4 4-2 2-2-2"/><path d="M2 13l5-5 5 5-2 2-2-2"/><path d="M11 13l5-5"/></svg>
+        </div>
+        <h3>Geloofwaardige ketenrol</h3>
+        <p>Door transparant data door te geven en niet zelf te scoren, positioneert Rensa zich als betrouwbare ketenpartner in plaats van als commerciële beoordelaar.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">04 · Klimaat</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 5-9 9-9 0 0 4 8 4 12s-3 4-6 4z"/><path d="M11 20s-1-4 1-7"/></svg>
+        </div>
+        <h3>Bijdrage aan minder uitstoot</h3>
+        <p>Deze waarde gaat verder dan één klant of project. Betere beschikbaarheid van CO₂-data zorgt voor meer transparantie in de keten. Dat helpt klanten bewuster te kiezen en stimuleert leveranciers hun producten te verbeteren.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo strip als visuele break -->
+  <div class="sec" style="border-top:none; padding-top:0;">
+    <div class="photo-strip">
+      <div class="photo-strip-item">
+        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Modern kantoor en utiliteit">
+        <span class="photo-strip-label">Utiliteit</span>
+      </div>
+      <div class="photo-strip-item">
+        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Modern gebouw">
+        <span class="photo-strip-label">Bouw</span>
+      </div>
+      <div class="photo-strip-item">
+        <img src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Duurzaamheid en natuur">
+        <span class="photo-strip-label">Duurzaamheid</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Van nice to have naar must have</div>
+    <h2 class="sec-title">De vraag is niet meer <em>hypothetisch</em>.</h2>
+    <p class="sec-lead">In de klantgesprekken kwam de boodschap consistent terug: productdata schuift snel op van wens naar vereiste.</p>
+
+    <div class="bigstats">
+      <div class="bigstat">
+        <div class="bs-tag">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+          Verwachting van klanten
+        </div>
+        <div class="bs-num"><em>1</em> jaar</div>
+        <div class="bs-desc">De meeste klanten verwachten dat productdata binnen korte tijd een harde eis wordt in vrijwel alle grotere projecten.</div>
+      </div>
+      <div class="bigstat">
+        <div class="bs-tag">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Waar de uitstoot zit
+        </div>
+        <div class="bs-num">In <em>de producten</em></div>
+        <div class="bs-desc">Voor veel klanten zit het grootste deel van de impact niet in transport of kantoorprocessen, maar in de toegepaste producten.</div>
+      </div>
+    </div>
+
+    <div class="pull">
+      <p class="pull-text">Ik denk binnen nu en een jaar, en misschien is het drie jaar, maar het gaat komen. We bereiden ons er nu al op voor.</p>
+      <div class="pull-source">Grote installateur · Key account</div>
+    </div>
+
+    <div class="statement">
+      <div class="statement-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1 4-2 5l-1 1v3H8v-3l-1-1c-1-1-2-2.5-2-5a7 7 0 0 1 7-7z"/></svg>
+        Kernboodschap
+      </div>
+      <h3>Van <em>nice to have</em><br>naar must have.</h3>
+      <p>Niet meer de vraag is óf dit komt, maar wanneer en in welke vorm. Rensa kan die overgang voor klanten eenvoudiger maken.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Wat er nu niet werkt</div>
+    <h2 class="sec-title">De huidige situatie loopt vast op <em>fragmentatie</em>.</h2>
+    <p class="sec-lead">Data bestaat vaak wel, maar staat niet op de plek waar klanten keuzes maken.</p>
+
+    <div class="problem">
+      <div class="problem-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Huidige situatie · losse PDF's en losse bronnen
+      </div>
+      <div>
+        <h4>Geen goede vergelijking mogelijk</h4>
+        <ul>
+          <li><span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>'s en <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>'s staan verspreid over leverancierssites en onze webshop</li>
+          <li>Klant moet per artikel zoeken en handmatig verwerken</li>
+          <li>Data staat los van offerte, <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> en bestelproces</li>
+          <li>Bij grote orders is dit praktisch onwerkbaar</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pull">
+      <p class="pull-text">Je zou gek zijn om bij duizend artikelen elk PDFje los te openen.</p>
+      <div class="pull-source">Leverancier · Productdata</div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('samenvatting')"><span class="nav-link-tag">02 · Vorige</span><span class="nav-link-name">← Managementsamenvatting</span></button>
+    <button class="nav-link next" onclick="showTab('urgentie')"><span class="nav-link-tag">04 · Volgende</span><span class="nav-link-name">De urgentie →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 3: URGENTIE ════════ -->
+<section class="page" id="page-urgentie">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 04 · De urgentie</div>
+    <div class="hero-num">04</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Waarom <em>nu actie</em><br>nodig is.</h1>
+      <p class="hero-lead">De urgentie komt niet uit één bron. Klantvraag, regelgeving en concurrentie bewegen tegelijk en versterken elkaar.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Drie samenlopende drukken</div>
+    <h2 class="sec-title">Het probleem komt niet uit één hoek, <em>maar uit drie tegelijk</em>.</h2>
+    <p class="sec-lead">Wat dit dossier urgent maakt, is dat klantvraag, regelgeving en concurrentie alle drie tegelijk in beweging zijn en elkaar versterken in plaats van afzwakken.</p>
+
+    <div class="pressure">
+      <div class="pressure-col">
+        <div class="pressure-icon-wrap">
+          <div class="pressure-num">01</div>
+          <svg class="pressure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H4.6a.6.6 0 0 1-.6-.6V3"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+        </div>
+        <h4>Klanten kunnen geen bewuste keuze maken</h4>
+        <p>Zonder gestructureerde data kunnen klanten producten niet vergelijken op duurzaamheid. De behoefte is er, maar de ondersteuning ontbreekt nog.</p>
+      </div>
+      <div class="pressure-col">
+        <div class="pressure-icon-wrap">
+          <div class="pressure-num">02</div>
+          <svg class="pressure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h4>Regelgeving komt dichterbij</h4>
+        <p><span class="tt" data-tt="Corporate Sustainability Reporting Directive: Europese wetgeving die bedrijven verplicht te rapporteren over hun duurzaamheidsprestaties.">CSRD</span>, Digital Product Passport en de <span class="tt" data-tt="Nationale Milieudatabase: de Nederlandse referentiedatabase voor milieuprestaties van bouwmaterialen, verplicht bij MPG-berekeningen.">NMD</span> vergroten de druk op betrouwbare en herleidbare productdata.</p>
+      </div>
+      <div class="pressure-col">
+        <div class="pressure-icon-wrap">
+          <div class="pressure-num">03</div>
+          <svg class="pressure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        </div>
+        <h4>Concurrenten bewegen al</h4>
+        <p>Rexel en Technische Unie hebben al zichtbare stappen gezet. Rensa is op dit thema nog beperkt zichtbaar in de markt.</p>
+      </div>
+    </div>
+
+    <div class="pull">
+      <p class="pull-text">Als we allemaal gaan wachten tot onze klanten erom vragen, dan ben je nog wel even bezig.</p>
+      <div class="pull-source">Grote installateur · Key account</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Concurrentielandschap</div>
+    <h2 class="sec-title">De concurrentie <em>beweegt al meetbaar</em>.</h2>
+    <p class="sec-lead">Rensa is niet de eerste die deze beweging ziet. Dat verandert het plaatje van vooroplopen naar inhalen.</p>
+
+    <div class="compete">
+      <div class="compete-row">
+        <div class="compete-name">Rexel</div>
+        <div class="compete-desc">Carbon Tracker en Duurzame Keuze, eigen rating per productgroep</div>
+        <div class="compete-status live">Live</div>
+      </div>
+      <div class="compete-row">
+        <div class="compete-name">Technische Unie</div>
+        <div class="compete-desc">Schneider Environmental Data Program, <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span> per product</div>
+        <div class="compete-status live">Live</div>
+      </div>
+      <div class="compete-row">
+        <div class="compete-name">Wasco</div>
+        <div class="compete-desc">Volgt sectorroutekaart via Techniek Nederland en 2BA</div>
+        <div class="compete-status partial">Beperkt</div>
+      </div>
+      <div class="compete-row is-rensa">
+        <div class="compete-name">
+          <svg class="rensa-logo" viewBox="0 0 240 80" style="width:70px;height:auto;"><use href="#logo-rensa"/></svg>
+        </div>
+        <div class="compete-desc">Enkel losse <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>'s in PDF-bestanden zichtbaar op de webpagina van sommige producten</div>
+        <div class="compete-status behind">Achter</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Kosten van afwachten</div>
+    <h2 class="sec-title">Wachten is geen <em>neutrale keuze</em>.</h2>
+    <p class="sec-lead">In een markt waar grote spelers in beweging komen, betekent stilstand achteruitgang. Drie kosten zijn op basis van klantgesprekken concreet zichtbaar.</p>
+
+    <div class="cost-grid">
+      <div class="cost-cell">
+        <div class="cost-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7c-1.5-2.4-4-4-7-4-5 0-9 4-9 9s4 9 9 9c3 0 5.5-1.6 7-4"/><line x1="3" y1="11" x2="14" y2="11"/><line x1="3" y1="14" x2="14" y2="14"/></svg>
+        </div>
+        <h4>Klanten zoeken elders</h4>
+        <p>Bij grotere tenders wacht de klant niet tot Rensa klaar is. De klant kiest voor de partij die de data al kan leveren.</p>
+      </div>
+      <div class="cost-cell">
+        <div class="cost-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        </div>
+        <h4>Implementatie onder druk</h4>
+        <p>Wat nu rustig opgebouwd kan worden, moet later mogelijk in korte tijd onder externe druk worden gerealiseerd.</p>
+      </div>
+      <div class="cost-cell">
+        <div class="cost-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,7 9,13 13,9 21,17"/><polyline points="14,17 21,17 21,10"/></svg>
+        </div>
+        <h4>Erosie van geloofwaardigheid</h4>
+        <p>Als Rensa zich duurzaam profileert maar concurrenten verder zijn in CO₂-data, verzwakt dat de geloofwaardigheid.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('waarde')"><span class="nav-link-tag">03 · Vorige</span><span class="nav-link-name">← De waarde</span></button>
+    <button class="nav-link next" onclick="showTab('rol')"><span class="nav-link-tag">05 · Volgende</span><span class="nav-link-name">Rensa's rol →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 4: ROL ════════ -->
+<section class="page" id="page-rol">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 05 · Rensa's rol</div>
+    <div class="hero-num">05</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Waarom <em>Rensa</em> het<br>voortouw moet nemen.</h1>
+      <p class="hero-lead">Rensa zit als technische groothandel precies tussen fabrikant en installateur. Dat maakt Rensa een logische vertaler, standaardzetter en kennisdeler.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Aansluiting kernwaarden</div>
+    <h2 class="sec-title">Geen nieuw thema, <em>operationalisering van bestaande waarden</em>.</h2>
+    <p class="sec-lead">Het ontsluiten van CO₂-data is geen nieuw los thema. Het maakt bestaande waarden concreet: duurzaamheid, innovatie, marktleiderschap en samenwerking in de keten.</p>
+
+    <div class="values-grid">
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 5-9 9-9 0 0 4 8 4 12s-3 4-6 4z"/><path d="M11 20s-1-4 1-7"/></svg>
+          </div>
+          <h4>Duurzaamheid</h4>
+        </div>
+        <div class="value-sub">Eigen doel én klantbehoefte</div>
+        <p>Productdata richting klanten verlengt Rensa's duurzaamheidsambitie naar de keten.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1 4-2 5l-1 1v3H8v-3l-1-1c-1-1-2-2.5-2-5a7 7 0 0 1 7-7z"/></svg>
+          </div>
+          <h4>Business development</h4>
+        </div>
+        <div class="value-sub">Toonaangevende innovatie</div>
+        <p>CO₂-dataontsluiting past bij de beweging naar digitale, datagedreven klantwaarde.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          </div>
+          <h4>Eerst de beste, dan de grootste</h4>
+        </div>
+        <div class="value-sub">Richting geven aan de markt</div>
+        <p>Wie het juiste model neerzet, maakt het verschil tussen volgen en richting geven.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h4>Samenwerken in de keten</h4>
+        </div>
+        <div class="value-sub">Open en transparant</div>
+        <p>Geen eigen rekenmagie, maar betrouwbare data delen vanuit bron en keten.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Voortrekkersrol kennisdeling</div>
+    <h2 class="sec-title">Waarom Rensa <em>het voortouw</em> moet nemen in kennisdeling.</h2>
+    <p class="sec-lead">Een groothandel zit per definitie tussen fabrikant en installateur in. Dat is geen passieve positie, dat is een vertaalpositie. Wie deze rol pakt, definieert de standaard.</p>
+
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">A · Kennisbrug</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <h3>Vertaler tussen fabrikant en installateur</h3>
+        <p>Fabrikanten leveren <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>'s en <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>'s. Installateurs hebben uitkomsten en context nodig. Rensa kan die vertaalslag maken.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">B · Standaardzetter</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h20"/><path d="M2 12h20"/><path d="M2 17h20"/><circle cx="6" cy="7" r="2" fill="currentColor"/><circle cx="14" cy="12" r="2" fill="currentColor"/><circle cx="18" cy="17" r="2" fill="currentColor"/></svg>
+        </div>
+        <h3>Definieert wat goede data is</h3>
+        <p>Als grote inkoper kan Rensa eisen stellen aan datakwaliteit, vorm en toegankelijkheid.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">C · Kennisdeler</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3>Brengt de sector verder</h3>
+        <p>Door kennis te delen via klanten, branchepartners en bijeenkomsten versterkt Rensa zijn reputatie als kennispartner.</p>
+      </div>
+    </div>
+
+    <div class="pull">
+      <p class="pull-text">De groothandel moet eigenlijk de CO₂-data beter inzichtelijk maken. Daar zit jullie kracht.</p>
+      <div class="pull-source">Grote installateur · Utiliteit</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Eén duidelijk principe</div>
+    <h2 class="sec-title">Wat Rensa <em>vooral niet</em> moet gaan doen.</h2>
+    <p class="sec-lead">De richting is duidelijk: Rensa moet data toegankelijk maken, maar niet zelf ongecertificeerde labels of berekeningen verzinnen.</p>
+
+    <div class="binary">
+      <div>
+        <div class="binary-tag">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Wel doen
+        </div>
+        <h4>Productdata toegankelijk maken</h4>
+        <p>Data van fabrikanten direct ontsluiten, leveranciers stimuleren, logistieke data delen en samenwerken met gecertificeerde partners.</p>
+      </div>
+      <div class="dont">
+        <div class="binary-tag dont">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Niet doen
+        </div>
+        <h4>Zelf scores verzinnen</h4>
+        <p>Geen eigen duurzaamheidsbadges, geen onduidelijke berekeningen en geen claims die niet door de bron worden gedragen.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('urgentie')"><span class="nav-link-tag">04 · Vorige</span><span class="nav-link-name">← De urgentie</span></button>
+    <button class="nav-link next" onclick="showTab('resultaten')"><span class="nav-link-tag">06 · Volgende</span><span class="nav-link-name">Resultaten →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 5: RESULTATEN ════════ -->
+<section class="page" id="page-resultaten">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 06 · Resultaten</div>
+    <div class="hero-num">06</div>
+    <div class="hero-content">
+      <h1 class="hero-title">De <em>belangrijkste</em><br>bevindingen.</h1>
+      <p class="hero-lead">De volgende zes resultaten vormen samen de basis van de aanbeveling: ontsluit data, maar interpreteer deze niet zelf.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Zes hoofdbevindingen</div>
+    <h2 class="sec-title">Klik op een bevinding voor de <em>onderbouwing</em>.</h2>
+    <p class="sec-lead">De bevindingen zijn op volgorde van strategisch gewicht. Ze vormen samen de basis van de aanbeveling om data te ontsluiten zonder zelf te interpreteren.</p>
+
+    <div class="findings">
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">01</div>
+        <div class="finding-content">
+          <h3>De waarde zit in ontsluiten, niet in eigen interpretatie</h3>
+          <p>Klanten willen objectieve data, geen Rensa-score. Eigen labels worden snel gezien als marketing en kunnen vertrouwen ondermijnen.</p>
+          <div class="finding-extra"><strong>Onderbouwing:</strong> Meerdere klanten gaven aan geen behoefte te hebben aan een eigen Rensa-score. Transparante doorgifte, eventueel via gecertificeerde derden, sluit beter aan op de behoefte. Ze verwezen ook vaak naar het groene boompje van de TU, dit is volgens veel klanten (en leveranciers) niet de juiste manier om dit probleem aan te pakken.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">02</div>
+        <div class="finding-content">
+          <h3>Integratie in offerte en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> is belangrijker dan de webshop</h3>
+          <p>Grote accounts bestellen vaak via eigen <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>-systemen. Data moet dus beschikbaar zijn op het moment dat de keuze wordt gemaakt.</p>
+          <div class="finding-extra"><strong>Onderbouwing:</strong> Webshops zijn vooral relevant voor kleinere of losse bestellingen. Voor grote klanten zit de echte waarde in integratie in offerte, <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> of <span class="tt" data-tt="Application Programming Interface: een technische koppeling waarmee systemen automatisch data met elkaar kunnen uitwisselen.">API</span>-koppelingen. Een stap in de goede richting zou bijvoorbeeld al zijn om minstens ervoor te zorgen dat de producten die een <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span> hebben ook meegestuurd worden naar klanten die via <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> bestellen.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">03</div>
+        <div class="finding-content">
+          <h3>Leveranciers verschillen sterk in gereedheid en kennis</h3>
+          <p>De helft van de geïnterviewde leveranciers levert al <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>-data. De andere helft loopt achter door tijd, kosten en beperkte kennis.</p>
+          <div class="finding-extra"><strong>Onderbouwing:</strong> Capaciteit, kosten en kennis spelen allemaal een grote rol bij het niet leveren van data. Het gebrek aan kennis rondom dit onderwerp bij sommige leveranciers is opvallend, dit resulteert in een terughoudende houding. Druk én kennisdeling vanuit Rensa als grote inkoper kan deze drempels verlagen.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">04</div>
+        <div class="finding-content">
+          <h3>Zonder levensduur is data niet vergelijkbaar</h3>
+          <p>Een CO₂-waarde zegt weinig zonder levensduur. Klanten beginnen levensduur als onderdeel van de data te eisen.</p>
+          <div class="finding-extra"><strong>Onderbouwing:</strong> Een product met 10 kg CO₂ over 10 jaar is niet direct vergelijkbaar met 20 kg CO₂ over 50 jaar. Zonder levensduur vergelijk je appels met peren. Brancheorganisaties wijzen hier expliciet op als kwaliteitsvereiste.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">05</div>
+        <div class="finding-content">
+          <h3>De gebruiksfase <span class="tt" data-tt="Levenscyclusfase B6 (EN 15804): het energieverbruik van een product tijdens gebruik. Bij installatietechniek vaak de grootste bron van CO₂-uitstoot.">B6</span> is doorslaggevend voor installatietechniek</h3>
+          <p>Bij verwarming en ventilatie zit de grootste impact vaak in de gebruiksfase. Daarom is <span class="tt" data-tt="Levenscyclusfase B6 (EN 15804): het energieverbruik van een product tijdens gebruik. Bij installatietechniek vaak de grootste bron van CO₂-uitstoot.">B6</span>-data extra relevant.</p>
+          <div class="finding-extra"><strong>Onderbouwing:</strong> Leveranciersdata over reëel verbruik in <span class="tt" data-tt="Levenscyclusfase B6 (EN 15804): het energieverbruik van een product tijdens gebruik. Bij installatietechniek vaak de grootste bron van CO₂-uitstoot.">B6</span> is nog beperkt en vaak gebaseerd op aannames. Hier kan Rensa kwaliteitseisen helpen aanscherpen.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">06</div>
+        <div class="finding-content">
+          <h3>Eigen logistiek is een directe <span class="tt" data-tt="Indirecte uitstoot in de waardeketen van een organisatie, inclusief de CO₂-impact van ingekochte producten en transport.">Scope 3</span>-bron voor klanten</h3>
+          <p>Rensa beschikt over eigen transportdata (BigMile) en heeft een sterke positie op duurzame logistiek. Die data is bruikbaar voor klantreporting.</p>
+          <div class="finding-extra"><strong>Onderbouwing:</strong> Klanten met rapportageverplichtingen kunnen transportinformatie gebruiken in hun <span class="tt" data-tt="Indirecte uitstoot in de waardeketen van een organisatie, inclusief de CO₂-impact van ingekochte producten en transport.">Scope 3</span>-rapportage. Rensa loopt hier al voorop, maar maakt dit nog niet zichtbaar genoeg.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Visualisatie · de kloof</div>
+    <h2 class="sec-title">Per thema: <em>klantvraag</em> versus <em>leveranciersaanbod</em>.</h2>
+    <p class="sec-lead">Klik op een thema voor toelichting. De kloof tussen vraag en aanbod is precies de ruimte waarin Rensa als ketenpartij waarde kan toevoegen.</p>
+
+    <div class="gap" id="gapContainer"></div>
+    <div class="gap-legend">
+      <div class="gap-legend-item"><span class="gap-legend-dot" style="background:var(--red)"></span>Klantvraag</div>
+      <div class="gap-legend-item"><span class="gap-legend-dot" style="background:var(--ink)"></span>Leveranciersaanbod</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Stemmen uit de keten</div>
+    <h2 class="sec-title">Wat <em>klanten en leveranciers</em> zeggen.</h2>
+    <p class="sec-lead">Een dwarsdoorsnede van de gesprekken. Geanonimiseerd, maar onverkort qua strekking.</p>
+
+    <div class="quote-grid">
+      <div class="q-cell"><div class="q-label">Leverancier · Commercieel vraagstuk</div><p>Bij het ontsluiten van niet gecertificeerde data wordt het niet meer een duurzaamheidsvraagstuk, dan wordt het een commercieel vraagstuk.</p><div class="src">Leverancier · Productdata</div></div>
+      <div class="q-cell"><div class="q-label">Brancheorganisatie · CO₂ first</div><p>CO₂ first, de rest kan wachten. Geen energie verspillen aan andere milieu-indicatoren.</p><div class="src">Brancheorganisatie</div></div>
+      <div class="q-cell"><div class="q-label">Brancheorganisatie · Start praktisch</div><p>Laat perfectie niet de vijand zijn van het goede.</p><div class="src">Brancheorganisatie</div></div>
+      <div class="q-cell"><div class="q-label">Grote installateur · Objectiviteit</div><p>De <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>-waarde is voor iedereen hetzelfde en dat moet ook zo zijn.</p><div class="src">Grote installateur · Key account</div></div>
+      <div class="q-cell"><div class="q-label">Grote installateur · Rol groothandel</div><p>De groothandel moet eigenlijk de CO₂-data beter inzichtelijk maken. Daar zit jullie kracht.</p><div class="src">Grote installateur · Utiliteit</div></div>
+      <div class="q-cell"><div class="q-label">Leverancier · Gebruiksgemak</div><p>Je zou gek zijn om bij duizend artikelen elk PDFje los te openen.</p><div class="src">Leverancier · Productdata</div></div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('rol')"><span class="nav-link-tag">05 · Vorige</span><span class="nav-link-name">← Rensa's rol</span></button>
+    <button class="nav-link next" onclick="showTab('routes')"><span class="nav-link-tag">07 · Volgende</span><span class="nav-link-name">De routes →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 6: DE ROUTES ════════ -->
+<section class="page" id="page-routes">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 07 · De routes</div>
+    <div class="hero-num">07</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Van inzicht naar <em>uitvoering</em>.</h1>
+      <p class="hero-lead">De business case laat zien waarom. Dit hoofdstuk laat zien hoe. Rensa heeft drie realistische routes, elk met eigen gevolgen.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Drie scenario's</div>
+    <h2 class="sec-title">Drie routes, <em>drie uitkomsten</em>.</h2>
+    <p class="sec-lead">Niet elke route past even goed bij de conclusies uit het onderzoek. Hieronder de drie scenario's op hoofdlijnen. Daarna werk ik ze stuk voor stuk uit, met de gevolgen voor Rensa.</p>
+
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">A · Extern platform</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h3>Aansluiten bij een geverifieerd platform</h3>
+        <p>Rensa sluit aan bij een onafhankelijk platform dat leveranciersdata laat verifiëren en doorgeeft. Rensa toont de data, berekent niets zelf.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">B · Rensa zelf</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <h3>Alles in eigen beheer</h3>
+        <p>Rensa bouwt zelf de infrastructuur om data via 2BA op te halen en transparant te tonen, zonder eigen labels of berekeningen.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">C · Afwachten</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        </div>
+        <h3>Wachten op druk van buiten</h3>
+        <p>Rensa wacht tot wetgeving of klantdruk dwingt tot actie. Op papier veilig, maar in de praktijk gewoon geen keuze.</p>
+      </div>
+    </div>
+
+    <h2 class="sec-title" style="margin-top:56px;">De drie routes <em>naast elkaar</em>.</h2>
+    <p class="sec-lead">Dezelfde routes, afgezet tegen de criteria die er voor Rensa toe doen. Zo wordt in één oogopslag zichtbaar waarom de aanbeveling uitkomt op een gefaseerde start via route A.</p>
+
+    <div class="rmatrix">
+      <div class="rmatrix-row rmatrix-head">
+        <div class="rmatrix-crit">Criterium</div>
+        <div class="rmatrix-cell">A · Extern</div>
+        <div class="rmatrix-cell">B · Eigen</div>
+        <div class="rmatrix-cell">C · Afwachten</div>
+      </div>
+      <div class="rmatrix-row">
+        <div class="rmatrix-crit">Neutraliteit geborgd</div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-matig"><span class="rmatrix-dot"></span>Matig</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-na"><span class="rmatrix-dot"></span>N.v.t.</span></div>
+      </div>
+      <div class="rmatrix-row">
+        <div class="rmatrix-crit">Snelheid van realisatie</div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-zwak"><span class="rmatrix-dot"></span>Zwak</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-zwak"><span class="rmatrix-dot"></span>Zwak</span></div>
+      </div>
+      <div class="rmatrix-row">
+        <div class="rmatrix-crit">Lage eigen capaciteit nodig</div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-matig"><span class="rmatrix-dot"></span>Matig</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-zwak"><span class="rmatrix-dot"></span>Zwak</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+      </div>
+      <div class="rmatrix-row">
+        <div class="rmatrix-crit">Onafhankelijkheid van platform</div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-zwak"><span class="rmatrix-dot"></span>Zwak</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+      </div>
+      <div class="rmatrix-row">
+        <div class="rmatrix-crit">Kwaliteit en vergelijkbaarheid</div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-zwak"><span class="rmatrix-dot"></span>Zwak</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-na"><span class="rmatrix-dot"></span>N.v.t.</span></div>
+      </div>
+      <div class="rmatrix-row">
+        <div class="rmatrix-crit">Marktpositie behouden</div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-sterk"><span class="rmatrix-dot"></span>Sterk</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-matig"><span class="rmatrix-dot"></span>Matig</span></div>
+        <div class="rmatrix-cell"><span class="rmatrix-rate rate-zwak"><span class="rmatrix-dot"></span>Zwak</span></div>
+      </div>
+    </div>
+
+    <div class="rmatrix-legend">
+      <div class="rmatrix-legend-item"><span class="rmatrix-dot" style="background:var(--ink)"></span>Sterk</div>
+      <div class="rmatrix-legend-item"><span class="rmatrix-dot" style="background:var(--ink-mute)"></span>Matig</div>
+      <div class="rmatrix-legend-item"><span class="rmatrix-dot" style="background:var(--red)"></span>Zwak</div>
+      <div class="rmatrix-legend-item"><span class="rmatrix-dot" style="background:transparent;border:1px solid var(--rule)"></span>Niet van toepassing</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Route A · Extern geverifieerd platform</div>
+    <h2 class="sec-title">Aansluiten bij een <em>onafhankelijk platform</em>.</h2>
+    <p class="sec-lead">Rensa sluit aan bij een platform zoals GSES, het Global Sustainable Enterprise System. Leveranciers laten hun productdata onafhankelijk verifiëren, Rensa geeft die geverifieerde score door via de webshop en op termijn via <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>. Deze route is direct getoetst in de praktijk.</p>
+
+    <div class="problem">
+      <div class="problem-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1 4-2 5l-1 1v3H8v-3l-1-1c-1-1-2-2.5-2-5a7 7 0 0 1 7-7z"/></svg>
+        Wat de pilot liet zien · INKA x GSES, 22 april 2026
+      </div>
+      <div>
+        <h4>Een werkende test, niet alleen een idee</h4>
+        <p class="problem-note">Rensa nam deel aan de pilot samen met leveranciers Geberit, Remeha, Aalberts IPS en Afpro Filters. Producten krijgen een Nature Impact Score, vergeleken met het gemiddelde van de productcategorie. Er zijn twee datatypen: <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span> en <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span> als hoogste kwaliteit, en een Bill of Materials als toegankelijker alternatief voor leveranciers die nog geen volledige <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span> hebben. Belangrijk detail: alleen data die door een onafhankelijke auditor is geverifieerd krijgt een gekleurde score en mag extern worden gebruikt.</p>
+      </div>
+    </div>
+
+    <h2 class="sec-title" style="margin-top:56px;">Waarom dit een <em>valide route</em> is.</h2>
+    <div class="values-grid">
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h4>Neutraliteit is geborgd</h4>
+        </div>
+        <div class="value-sub">Een derde hangt de score, niet Rensa</div>
+        <p>Een onafhankelijke, geverifieerde partij kent de score toe. Rensa geeft alleen door. Dat is precies de rol die klanten in de interviews vroegen.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H4.6a.6.6 0 0 1-.6-.6V3"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+          </div>
+          <h4>Overzichtelijker voor de klant</h4>
+        </div>
+        <div class="value-sub">Eén score in plaats van losse PDF's</div>
+        <p>Klanten willen geen duizend PDF's openen. Eén gestandaardiseerde, vergelijkbare score sluit aan op wat zij in de gesprekken aangaven.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h4>Activeert druk via de keten</h4>
+        </div>
+        <div class="value-sub">Claimverzoek richting leveranciers</div>
+        <p>Rensa kan via een formeel claimverzoek data opvragen bij leveranciers zonder scorecard. De klantvraag wordt zo concreet en meetbaar.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h4>Past op webshop en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span></h4>
+        </div>
+        <div class="value-sub"><span class="tt" data-tt="Application Programming Interface: een technische koppeling waarmee systemen automatisch data met elkaar kunnen uitwisselen.">API</span> maakt integratie mogelijk</div>
+        <p>De pilot toont de score al in de webshop. Via <span class="tt" data-tt="Application Programming Interface: een technische koppeling waarmee systemen automatisch data met elkaar kunnen uitwisselen.">API</span>-koppelingen is integratie met het <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> van Rensa in theorie mogelijk, zodat data vroeg in het proces zit.</p>
+      </div>
+    </div>
+
+    <div class="problem" style="margin-top:48px;">
+      <div class="problem-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Gevolgen · wat Rensa hiervoor accepteert
+      </div>
+      <div>
+        <h4>De keerzijde, eerlijk benoemd</h4>
+        <ul>
+          <li>Afhankelijkheid van een commercieel platform: continuïteit, prijsbeleid en doorontwikkeling liggen buiten Rensa.</li>
+          <li>Arbeidsintensief bij kleine series: handmatig uploaden is haalbaar tot ongeveer 50 producten, daarboven is automatisering nodig.</li>
+          <li>Standaarden zijn nog niet eenduidig: <span class="tt" data-tt="Product Environmental Footprint: een Europese berekeningssystematiek voor de milieuprestatie van producten, ontwikkeld door de Europese Commissie.">PEF</span>, <span class="tt" data-tt="Europese norm die de rekenregels voor EPD's van bouwproducten vastlegt. Verplicht voor gecertificeerde EPD's.">EN 15804</span>, <span class="tt" data-tt="Nationale Milieudatabase: de Nederlandse referentiedatabase voor milieuprestaties van bouwmaterialen, verplicht bij MPG-berekeningen.">NMD</span> en ETIM zijn nog niet volledig op elkaar ingebed.</li>
+          <li>Beperkte dekking voor cv en klimaat: de pilot richtte zich op sanitair en verwarming, warmtepompen en ventilatie zijn nog beperkt gedekt.</li>
+          <li>Alleen geverifieerde data telt: producten zonder audit krijgen geen score, te vroeg breed communiceren geeft een incompleet beeld.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pull">
+      <p class="pull-text">Neutraal, geverifieerd, aansluitend op webshop en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>, en het activeert druk via de keten richting leveranciers.</p>
+      <div class="pull-source">Eigen analyse · fit GSES-pilot met onderzoek</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Route B · Rensa zelf</div>
+    <h2 class="sec-title">Alles in <em>eigen beheer</em>.</h2>
+    <p class="sec-lead">In deze route bouwt Rensa zelf de infrastructuur om leveranciersdata via 2BA op te halen, te koppelen aan artikelen en transparant te tonen. Ook hier geldt de harde lijn uit het onderzoek: geen eigen berekeningen of labels. Rensa toont de bronwaarde met bronvermelding. Een externe gecertificeerde partij die labels levert blijft binnen deze route een optie. Wat Rensa juist niet doet, is zelf scores toekennen of zelf rekenen met leveranciersdata zonder die berekening inzichtelijk te maken.</p>
+
+    <h2 class="sec-title" style="margin-top:16px;">Waarom dit een <em>valide route</em> is.</h2>
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">01 · Regie</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+        <h3>Maximale regie</h3>
+        <p>Rensa is niet afhankelijk van de continuïteit of het prijsbeleid van een extern platform en houdt de inrichting volledig in eigen hand.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">02 · Aansluiting</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        </div>
+        <h3>Bouwt op bestaande infrastructuur</h3>
+        <p>De route sluit direct aan op 2BA en op de eigen webshop en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>, in plaats van langs bestaande systemen heen te bouwen.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">03 · Neutraliteit</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7l-3 6h6z"/><path d="M19 7l3 6h-6z"/></svg>
+        </div>
+        <h3>Neutraliteit blijft mogelijk</h3>
+        <p>Zolang Rensa alleen brondata met bronvermelding toont en niet zelf interpreteert, blijft de neutrale doorgeefrol overeind.</p>
+      </div>
+    </div>
+
+    <div class="problem" style="margin-top:48px;">
+      <div class="problem-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Gevolgen · de prijs van eigen beheer
+      </div>
+      <div>
+        <h4>Wat volledige regie kost</h4>
+        <ul>
+          <li>Fors meer eigen IT- en datacapaciteit nodig, met een langere doorlooptijd voor de bouw.</li>
+          <li>Vergelijkbaarheid blijft een risico: zonder externe verificatie is het factor 5-probleem (zelfde product, vijf keer verschil door aangenomen levensduur) niet af te vangen.</li>
+          <li>De product- en artikelkoppeling is complex: <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span> zit op productniveau, <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span> op artikelniveau, en bij circa 1,4 miljoen artikelen is dat een grote puzzel.</li>
+          <li>Reputatierisico: zonder onafhankelijke audit is Rensa zelf aanspreekbaar op de kwaliteit van de getoonde data.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Route C · Afwachten</div>
+    <h2 class="sec-title">Wachten is <em>geen neutrale keuze</em>.</h2>
+    <p class="sec-lead">De derde route is niets doen tot wetgeving of klantdruk Rensa dwingt. Op papier de veiligste optie, in de praktijk een risico dat alleen maar groeit.</p>
+
+    <div class="cost-grid">
+      <div class="cost-cell">
+        <div class="cost-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,7 9,13 13,9 21,17"/><polyline points="14,17 21,17 21,10"/></svg>
+        </div>
+        <h4>Concurrenten lopen voor</h4>
+        <p>Rexel en Technische Unie zijn al live met CO₂-inzicht. Rensa is op dit thema nog beperkt zichtbaar in de markt.</p>
+      </div>
+      <div class="cost-cell">
+        <div class="cost-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7c-1.5-2.4-4-4-7-4-5 0-9 4-9 9s4 9 9 9c3 0 5.5-1.6 7-4"/><line x1="3" y1="11" x2="14" y2="11"/><line x1="3" y1="14" x2="14" y2="14"/></svg>
+        </div>
+        <h4>Klanten voelen de druk nu al</h4>
+        <p>Bedrijven met overheidsaanbestedingen wachten niet tot Rensa klaar is. Zij kiezen de partij die de data nu al kan leveren.</p>
+      </div>
+      <div class="cost-cell">
+        <div class="cost-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        </div>
+        <h4>Later onder tijdsdruk</h4>
+        <p>Wat nu rustig opgebouwd kan worden, moet later in korte tijd onder externe druk worden gerealiseerd.</p>
+      </div>
+    </div>
+
+    <div class="statement">
+      <div class="statement-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Kernboodschap
+      </div>
+      <h3>Stilstand is <em>achteruitgang</em>.</h3>
+      <p>Wie wacht, laat de keuze uiteindelijk door de markt maken in plaats van zelf richting te geven. Daarom valt route C af als serieuze optie.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Onder elke route · het fundament</div>
+    <h2 class="sec-title">Zonder data om door te geven, <em>geen route</em>.</h2>
+    <p class="sec-lead">Of Rensa nu kiest voor een extern platform of voor eigen beheer, beide routes vallen of staan met de beschikbaarheid van betrouwbare leveranciersdata. En juist daar zit het knelpunt.</p>
+
+    <div class="bigstats">
+      <div class="bigstat">
+        <div class="bs-tag">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+          Beschikbaarheid van data
+        </div>
+        <div class="bs-num"><em>~90%</em></div>
+        <div class="bs-desc">van het actieve assortiment heeft nog geen <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span> of <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>-waarde beschikbaar. Daar ligt de grootste opgave, ongeacht de gekozen route.</div>
+      </div>
+      <div class="bigstat">
+        <div class="bs-tag">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1 4-2 5l-1 1v3H8v-3l-1-1c-1-1-2-2.5-2-5a7 7 0 0 1 7-7z"/></svg>
+          De echte rem
+        </div>
+        <div class="bs-num"><em>1 op 2</em></div>
+        <div class="bs-desc">van de geïnterviewde leveranciers levert al <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>-data. De andere helft nog niet, vaak niet uit onwil maar door kennisgebrek en het niet zien van de urgentie.</div>
+      </div>
+    </div>
+
+    <h2 class="sec-title" style="margin-top:40px;">Het fundament: <em>kennis en druk</em>.</h2>
+    <p class="sec-lead">Rensa staat als tussenspeler precies op de plek om dit los te trekken. Drie bewegingen tegelijk maken het verschil.</p>
+
+    <div class="pressure">
+      <div class="pressure-col">
+        <div class="pressure-icon-wrap">
+          <div class="pressure-num">01</div>
+          <svg class="pressure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        </div>
+        <h4>Maak de klantvraag hard</h4>
+        <p>Vertaal de aangetoonde klantvraag naar de leverancier. Maak duidelijk dat CO₂-data belangrijker is voor klanten dan veel leveranciers nu doorhebben.</p>
+      </div>
+      <div class="pressure-col">
+        <div class="pressure-icon-wrap">
+          <div class="pressure-num">02</div>
+          <svg class="pressure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <h4>Deel kennis</h4>
+        <p>De passieve houding komt vooral uit kennisgebrek. Rensa kan als tussenspeler uitleggen wat <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>'s en <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>'s zijn en waarom ze urgent worden, onder andere via de kennisdelingswebsite. Hier is alvast de directe link naar de leverancierswebsite die hiervoor is gebouwd: <a href="https://finnvanaken8-svg.github.io/kennisdeling/" target="_blank" style="color:var(--red);text-decoration:underline;font-weight:600;">leverancierswebsite →</a></p>
+      </div>
+      <div class="pressure-col">
+        <div class="pressure-icon-wrap">
+          <div class="pressure-num">03</div>
+          <svg class="pressure-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+        </div>
+        <h4>Zet de drukmeter op de leverancier</h4>
+        <p>Gebruik de driehoek leverancier, groothandel, klant. Rensa kan als grote inkoper, gedreven door de klantvraag, leveranciers in beweging brengen.</p>
+      </div>
+    </div>
+
+    <div class="pull">
+      <p class="pull-text">Als we vanuit Rensa iets willen afdwingen, zet dan de drukmeter op de leverancier, gedreven door de klantvraag.</p>
+      <div class="pull-source">Intern validatiegesprek · landelijke accounts</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">De aanbeveling</div>
+    <h2 class="sec-title">Gefaseerd starten via de <em>geverifieerde route</em>.</h2>
+    <p class="sec-lead">Op basis van de fit met het onderzoek is dit de meest realistische route: begin met de externe, geverifieerde route bij de koplopers die al <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>- of <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>-data hebben. Bouw parallel het fundament van kennis en druk op. Houd route B open voor het geval de markt of de afhankelijkheid van het platform daarom vraagt.</p>
+
+    <div class="conclusions">
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        <div class="conc-num">Stap 01</div>
+        <h4>Start klein</h4>
+        <p>Pilot bij koplopers met bestaande data, zoals Geberit, Remeha en Aalberts IPS.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        <div class="conc-num">Stap 02</div>
+        <h4>Bouw parallel</h4>
+        <p>Kennisdeling en gerichte druk richting leveranciers die nog geen data leveren.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <div class="conc-num">Stap 03</div>
+        <h4>Houd opties open</h4>
+        <p>Route B blijft achter de hand voor onafhankelijkheid van het platform.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div class="conc-num">Stap 04</div>
+        <h4>Borg neutraliteit</h4>
+        <p>Nooit zelf labelen of rekenen zonder de berekening inzichtelijk te maken.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('resultaten')"><span class="nav-link-tag">06 · Vorige</span><span class="nav-link-name">← Resultaten</span></button>
+    <button class="nav-link next" onclick="showTab('quickwins')"><span class="nav-link-tag">08 · Volgende</span><span class="nav-link-name">Quick wins →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 8: QUICK WINS ════════ -->
+<section class="page" id="page-quickwins">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 08 · Quick wins</div>
+    <div class="hero-num">08</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Quick <em>wins</em>.</h1>
+      <p class="hero-lead">De routes en het plan zijn de structurele beweging voor de lange termijn. Daarnaast zijn er twee dingen die Rensa nu al kan doen om zich op korte termijn sterker te positioneren, zonder grote investering.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Direct resultaat, lage drempel</div>
+    <h2 class="sec-title">Twee dingen die nu al <em>kunnen</em>.</h2>
+    <p class="sec-lead">Dit sluit aan op een opvallende uitkomst van het onderzoek: transport en verpakking is het enige thema waar het aanbod van Rensa de klantvraag al overtreft. Juist daar ligt laaghangend fruit. Rensa heeft hier al een voorsprong, alleen wordt die nog niet zichtbaar gemaakt richting de klant.</p>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Quick win 01</div>
+    <h2 class="sec-title">BigMile: transportdata standaard <em>zichtbaar</em>.</h2>
+    <p class="sec-lead">Rensa werkt samen met BigMile, een calculatie- en analyseplatform dat de CO₂-uitstoot van transport tot op zending- en klantniveau inzichtelijk maakt en kan ontsluiten richting de klant. Daarmee kan Rensa klanten direct bruikbare data leveren voor hun eigen rapportage en <span class="tt" data-tt="Indirecte uitstoot in de waardeketen van een organisatie, inclusief de CO₂-impact van ingekochte producten en transport.">Scope 3</span>.</p>
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">Waarom sterk</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Geverifieerde bron</h3>
+        <p>BigMile rekent volgens het internationaal erkende <span class="tt" data-tt="Global Logistics Emissions Council-framework: de internationale methodiek voor het berekenen van CO₂-uitstoot in de logistiek. De basis voor ISO 14083.">GLEC-framework</span> en was de eerste softwareleverancier die officieel volgens <span class="tt" data-tt="Internationale norm voor het berekenen en rapporteren van broeikasgasemissies in transport- en logistieke ketens.">ISO 14083</span> is geverifieerd. Geen zelfbedachte Rensa-score, maar geverifieerde data uit een erkende bron, precies binnen het neutraliteitsprincipe.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">Wat er nu gebeurt</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        </div>
+        <h3>Alleen op aanvraag</h3>
+        <p>De transportdata wordt nu alleen op aanvraag geleverd, voor of na een bestelling. Daardoor blijft een sterk punt grotendeels onzichtbaar voor de klant.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">De quick win</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16,8 20,8 23,11 23,16 16,16"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <h3>Vooraf en standaard tonen</h3>
+        <p>Communiceer dit standaard, bijvoorbeeld zichtbaar op de webshop. Klanten vragen er nu al om, ook als ze zelf nog niet rapportageplichtig zijn. De data en de samenwerking bestaan al, dus de drempel is laag.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Quick win 02</div>
+    <h2 class="sec-title">Duurzame verpakking als zichtbare <em>sterkte</em>.</h2>
+    <p class="sec-lead">Rensa beschikt over een bijzonder efficient verpakkingssysteem. Ook dat is een concrete duurzaamheidssterkte die nu nauwelijks naar buiten wordt gebracht.</p>
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">Waarom sterk</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27,6.96 12,12.01 20.73,6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <h3>Aantoonbare milieuwinst</h3>
+        <p>Efficient verpakken levert aantoonbaar milieuwinst op: minder materiaal betekent lager grondstofverbruik en minder CO₂, en compactere verpakkingen betekenen meer producten per vracht. Het sluit aan op de aangescherpte Europese doelen en telt mee in de <span class="tt" data-tt="Indirecte uitstoot in de waardeketen van een organisatie, inclusief de CO₂-impact van ingekochte producten en transport.">Scope 3</span> van de klant.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">Wat er nu gebeurt</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        </div>
+        <h3>Nauwelijks gecommuniceerd</h3>
+        <p>Het efficiente verpakkingssysteem wordt nu niet of nauwelijks actief gecommuniceerd richting klanten, terwijl het een concreet verhaal is.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">De quick win</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>Zichtbaar op de webshop</h3>
+        <p>Maak het verpakkingssysteem zichtbaar, bijvoorbeeld op de webshop, naast de BigMile-transportdata. Steeds meer klanten wegen duurzaamheid mee in hun aankoop.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">De positioneringslogica</div>
+    <h2 class="sec-title">Waarom dit <em>nu</em> moet.</h2>
+    <p class="sec-lead">Samen vormen de transportdata en het verpakkingssysteem een verhaal dat Rensa nu al kan vertellen. Door beide zichtbaar te maken op de webshop, gekoppeld aan het ontsluiten van data, zet Rensa een concrete stap richting meer transparantie in de keten.</p>
+
+    <div class="statement">
+      <div class="statement-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        Aansluiting bij de visie
+      </div>
+      <h3>Eerst de beste, dan de <em>grootste</em>.</h3>
+      <p>Niet wachten tot het moet, maar nu al laten zien dat Rensa voorop loopt op een gebied waar het al sterk is. Concurrenten als Rexel en Technische Unie profileren zich al actief op CO₂-data. Deze quick wins zijn een manier om op korte termijn zichtbaar mee te bewegen.</p>
+    </div>
+
+    <div class="values-grid">
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h4>Vrijwel alleen voordelen</h4>
+        </div>
+        <div class="value-sub">Lage investering, directe opbrengst</div>
+        <p>De data en de capaciteit bestaan al. Ze niet zichtbaar maken is vooral een gemiste kans op profilering en marktaandeel.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h4>Een belangrijke voorwaarde</h4>
+        </div>
+        <div class="value-sub">Blijf bij geverifieerde feiten</div>
+        <p>Ook hier geldt het neutraliteitsprincipe. Toon geverifieerde BigMile-data en concrete, aantoonbare verpakkingsfeiten, zonder ongefundeerde duurzaamheidsclaims. Juist dat maakt het geloofwaardig.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('routes')"><span class="nav-link-tag">07 · Vorige</span><span class="nav-link-name">← De routes</span></button>
+    <button class="nav-link next" onclick="showTab('plan')"><span class="nav-link-tag">09 · Volgende</span><span class="nav-link-name">Het plan →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 7: HET PLAN ════════ -->
+<section class="page" id="page-plan">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 09 · Het plan</div>
+    <div class="hero-num">09</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Het plan, <em>stap voor stap</em>.</h1>
+      <p class="hero-lead">De aanbevolen route vertaald naar uitvoering: fasering, wie wat doet, de randvoorwaarden, de risico's en hoe het blijft werken na mijn stage.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Fasering</div>
+    <h2 class="sec-title">Vier fases van <em>fundament naar dekking</em>.</h2>
+    <p class="sec-lead">Het plan bouwt stapsgewijs op. Eerst het fundament, dan een afgebakende pilot, daarna uitbreiding en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>, en tot slot bredere dekking met periodieke herijking.</p>
+
+    <div class="roadmap">
+      <div class="roadmap-track">
+        <div class="roadmap-phase">
+          <div class="rp-tag">Fase 1</div>
+          <h4>Pilot bij koplopers</h4>
+          <p>Geverifieerde scorecards live op een afgebakende productgroep.</p>
+          <svg class="roadmap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="roadmap-phase">
+          <div class="rp-tag">Fase 2</div>
+          <h4>Uitbreiden en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span></h4>
+          <p>Meer leveranciers via claimverzoeken, data ook via <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> en <span class="tt" data-tt="Application Programming Interface: een technische koppeling waarmee systemen automatisch data met elkaar kunnen uitwisselen.">API</span>.</p>
+          <svg class="roadmap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="roadmap-phase">
+          <div class="rp-tag">Fase 3</div>
+          <h4>Brede dekking</h4>
+          <p>Verbreden richting cv en klimaat, elke 6 tot 12 maanden herijken.</p>
+        </div>
+      </div>
+      <div class="roadmap-foundation">
+        <div class="rf-tag">Fase 0 · Fundament</div>
+        <p>Kennisdeling en druk richting leveranciers. Loopt continu en parallel onder alle fases.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="method-step">
+        <div class="ms-num-big">0</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+            Fundament leggen
+          </h4>
+          <p>Start direct en parallel aan de rest. Zonder data is er niets om door te geven.</p>
+          <ul>
+            <li>Kennisdeling richting leveranciers opzetten en de klantvraag hard maken</li>
+            <li>Koplopers met bestaande <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>- of <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>-data selecteren</li>
+            <li>Interne afspraak over neutraliteit vastleggen</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">1</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1 4-2 5l-1 1v3H8v-3l-1-1c-1-1-2-2.5-2-5a7 7 0 0 1 7-7z"/><path d="M9 18h6"/></svg>
+            Pilot bij koplopers
+          </h4>
+          <p>Sluit aan bij het geverifieerde platform en test op een afgebakende productgroep.</p>
+          <ul>
+            <li>Eerste scorecards zichtbaar maken in de webshop</li>
+            <li>Leren van de pilot: wat werkt, wat is arbeidsintensief</li>
+            <li>Resultaten gebruiken om de aanpak aan te scherpen</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">2</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            Uitbreiden en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>
+          </h4>
+          <p>Meer leveranciers betrekken en de data vroeg in de klantreis beschikbaar maken.</p>
+          <ul>
+            <li>Leveranciers zonder data benaderen via claimverzoeken</li>
+            <li>Data ook via <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> en <span class="tt" data-tt="Application Programming Interface: een technische koppeling waarmee systemen automatisch data met elkaar kunnen uitwisselen.">API</span> beschikbaar maken, niet alleen via de webshop</li>
+            <li>Zorgen dat de score zichtbaar is bij offerte en winkelwagen</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">3</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Brede dekking en herijken
+          </h4>
+          <p>Het assortiment verbreden en de aanpak actueel houden.</p>
+          <ul>
+            <li>Dekking verbreden richting cv en klimaat zodra die data groeit</li>
+            <li>Status elke 6 tot 12 maanden opnieuw toetsen aan wetgeving zoals <span class="tt" data-tt="Corporate Sustainability Reporting Directive: Europese wetgeving die bedrijven verplicht te rapporteren over hun duurzaamheidsprestaties.">CSRD</span>, <span class="tt" data-tt="Digital Product Passport: aankomende EU-verplichting om productinformatie inclusief milieu-impact digitaal vast te leggen gedurende de volledige levenscyclus.">DPP</span> en <span class="tt" data-tt="Nationale Milieudatabase: de Nederlandse referentiedatabase voor milieuprestaties van bouwmaterialen, verplicht bij MPG-berekeningen.">NMD</span></li>
+            <li>Route B heroverwegen als de afhankelijkheid van het platform knelt</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Rolverdeling</div>
+    <h2 class="sec-title">Wie doet <em>wat</em>.</h2>
+    <p class="sec-lead">Implementatie slaagt alleen als het belegd is. Per onderdeel een duidelijke eigenaar, met één persoon die het geheel bewaakt.</p>
+
+    <div class="values-grid">
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="14" y="6" width="3" height="12"/></svg>
+          </div>
+          <h4>Category management</h4>
+        </div>
+        <div class="value-sub">Wim van den Burg</div>
+        <p>Voert de druk richting leveranciers uit, gedreven door de aangetoonde klantvraag, en bepaalt waar de pilot start.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+          </div>
+          <h4>Data management</h4>
+        </div>
+        <div class="value-sub">Nancy Lesterade</div>
+        <p>Bewaakt de koppeling tussen product en artikel en de datakwaliteit via 2BA.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h4>IT en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span></h4>
+        </div>
+        <div class="value-sub">Rens Godschalk</div>
+        <p>Realiseert de technische ontsluiting via webshop en <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span>, inclusief de <span class="tt" data-tt="Application Programming Interface: een technische koppeling waarmee systemen automatisch data met elkaar kunnen uitwisselen.">API</span>-koppeling.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          </div>
+          <h4>E-commerce</h4>
+        </div>
+        <div class="value-sub">Jan Willem Lichtenberg</div>
+        <p>Bepaalt hoe en waar de data zichtbaar wordt in de klantreis, zonder dat het extra gedoe wordt.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <h4>Kwaliteit en KAM</h4>
+        </div>
+        <div class="value-sub">Kiki Olderaan</div>
+        <p>Borgt neutraliteit en bronvermelding en voorkomt dat er ergens toch eigen interpretatie insluipt.</p>
+      </div>
+      <div class="value-cell">
+        <div class="value-row">
+          <div class="value-num-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h4>Vaste eigenaar</h4>
+        </div>
+        <div class="value-sub">Aan te wijzen binnen het programma</div>
+        <p>Eén persoon die voortgang, knelpunten en periodieke herijking bewaakt, zodat het plan niet stilvalt.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Randvoorwaarden</div>
+    <h2 class="sec-title">Wat <em>vooraf</em> geregeld moet zijn.</h2>
+    <p class="sec-lead">Drie voorwaarden bepalen of de uitvoering kan slagen. Ze gelden ongeacht de gekozen route.</p>
+
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">01 · Standaarden</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+        </div>
+        <h3>Aansluiten op bestaande standaarden</h3>
+        <p>Bouw op 2BA, Ketenstandaard en ETIM, niet ernaast. Het voorstel moet aansluiten op wat deze standaarden al invullen.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">02 · Neutraliteit</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7l-3 6h6z"/><path d="M19 7l3 6h-6z"/></svg>
+        </div>
+        <h3>Neutraliteit hard borgen</h3>
+        <p>Alleen brondata met bronvermelding. Nooit zelf labelen of rekenen zonder de berekening inzichtelijk te maken.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">03 · Vroeg zichtbaar</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>Data vroeg in de klantreis</h3>
+        <p>Zichtbaar bij offerte en winkelwagen, niet pas achteraf, en ook via <span class="tt" data-tt="Enterprise Resource Planning: het centrale bedrijfssysteem voor orders, voorraden en klantdata. Grote installateurs bestellen hier vaak direct via.">ERP</span> voor accounts die niet via de webshop bestellen.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Risico's</div>
+    <h2 class="sec-title">De grootste <em>risico's</em>, en hoe we ze afvangen.</h2>
+    <p class="sec-lead">Klik op een risico voor de manier waarop het plan dit ondervangt.</p>
+
+    <div class="findings">
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">01</div>
+        <div class="finding-content">
+          <h3>Datakwaliteit en vergelijkbaarheid</h3>
+          <p>Fabrikanten berekenen op hun eigen manier, waardoor producten niet altijd eerlijk te vergelijken zijn.</p>
+          <div class="finding-extra"><strong>Hoe we dit afvangen:</strong> kies de geverifieerde route met onafhankelijke audits, toon de levensduur mee, en leun op gestandaardiseerde methodieken in plaats van losse leveranciersclaims.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">02</div>
+        <div class="finding-content">
+          <h3>Lage adoptie bij leveranciers</h3>
+          <p>Veel leveranciers leveren nog geen data, vaak door kennisgebrek en een passieve houding.</p>
+          <div class="finding-extra"><strong>Hoe we dit afvangen:</strong> combineer kennisdeling, formele claimverzoeken en de klantvraag als drukmiddel via de driehoek leverancier, groothandel, klant.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">03</div>
+        <div class="finding-content">
+          <h3>Afhankelijkheid van een extern platform</h3>
+          <p>Bij de externe route ligt continuïteit en prijsbeleid buiten Rensa.</p>
+          <div class="finding-extra"><strong>Hoe we dit afvangen:</strong> houd route B open, vermijd onomkeerbare lock-in en zorg dat de onderliggende data ook los van het platform bruikbaar blijft.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+      <div class="finding" onclick="toggleFinding(this)">
+        <div class="finding-num">04</div>
+        <div class="finding-content">
+          <h3>Neutraliteit onder druk</h3>
+          <p>De verleiding om zelf een score of label toe te voegen kan groeien zodra concurrenten dat doen.</p>
+          <div class="finding-extra"><strong>Hoe we dit afvangen:</strong> leg de neutraliteit vast als harde interne afspraak en laat KAM hierop toezien. Geen eigen labels, geen verborgen berekeningen.</div>
+        </div>
+        <div class="finding-toggle">+</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Borging en overdracht</div>
+    <h2 class="sec-title">Hoe dit blijft werken <em>na mijn stage</em>.</h2>
+    <p class="sec-lead">Een plan is pas waardevol als het na de oplevering wordt uitgevoerd en onderhouden. Drie dingen zorgen dat het niet afhankelijk blijft van mijn aanwezigheid.</p>
+
+    <div class="three-up">
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">A · Eigenaarschap</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3>Vaste eigenaar aanwijzen</h3>
+        <p>Eén persoon binnen het programma die voortgang, knelpunten en herijking bewaakt en het aanspreekpunt blijft. Mijn voorkeur gaat hierbij uit naar Jur Hofland, onze duurzaamheidscoördinator.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">B · Overdracht</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        </div>
+        <h3>Overdrachtsdocument</h3>
+        <p>Beschrijft hoe de opzet werkt, hoe data wordt verwerkt en bijgehouden, en waar op gelet moet worden bij nieuwe inzichten.</p>
+      </div>
+      <div>
+        <div class="tu-head">
+          <div class="tu-tag">C · Herijking</div>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </div>
+        <h3>Periodieke herijking</h3>
+        <p>Toets de status elke 6 tot 12 maanden opnieuw aan markt en wetgeving, zodat het plan actueel blijft.</p>
+      </div>
+    </div>
+
+    <div class="statement">
+      <div class="statement-tag">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Tot besluit
+      </div>
+      <h3>Discipline bepaalt het <em>succes</em>.</h3>
+      <p>Niet de kwaliteit van het plan op papier bepaalt of dit slaagt, maar de discipline in de uitvoering: continu monitoren, knelpunten snel oppakken en bijsturen waar nodig.</p>
+    </div>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('quickwins')"><span class="nav-link-tag">08 · Vorige</span><span class="nav-link-name">← Quick wins</span></button>
+    <button class="nav-link next" onclick="showTab('verantwoording')"><span class="nav-link-tag">10 · Volgende</span><span class="nav-link-name">Verantwoording →</span></button>
+  </div>
+</section>
+
+<!-- ════════ TAB 8: VERANTWOORDING ════════ -->
+<section class="page" id="page-verantwoording">
+  <div class="hero">
+    <div class="hero-meta"><span class="hero-meta-mark">●</span> Hoofdstuk 10 · Verantwoording</div>
+    <div class="hero-num">10</div>
+    <div class="hero-content">
+      <h1 class="hero-title">Hoe de <em>conclusies</em><br>zijn opgebouwd.</h1>
+      <p class="hero-lead">De business case rust op klantinterviews, leveranciersgesprekken, interne Rensa-input en deskresearch. De route- en implementatieaanbeveling is daarnaast getoetst aan de uitkomsten van de GSES-pilot met INKA van 22 april 2026.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Onderzoeksopzet in cijfers</div>
+    <h2 class="sec-title">Wat is er <em>gedaan</em>.</h2>
+    <p class="sec-lead">Het onderzoek bestaat uit vier complementaire pijlers, gericht op vraag, aanbod, interne uitvoerbaarheid en bredere context. De routeaanbeveling is aanvullend getoetst aan de uitkomsten van de GSES-pilot met INKA, een praktijkvalidatie die direct de basis vormt voor het implementatieplan in hoofdstuk 07.</p>
+
+    <div class="method-summary">
+      <div class="ms-cell">
+        <svg class="ms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="ms-num">8</div>
+        <div class="ms-label">Klantinterviews</div>
+      </div>
+      <div class="ms-cell">
+        <svg class="ms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        <div class="ms-num">8</div>
+        <div class="ms-label">Leveranciersgesprekken</div>
+      </div>
+      <div class="ms-cell">
+        <svg class="ms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><circle cx="12" cy="11" r="1.5" fill="currentColor"/></svg>
+        <div class="ms-num">∞</div>
+        <div class="ms-label">Constante interne gesprekken</div>
+      </div>
+      <div class="ms-cell">
+        <svg class="ms-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <div class="ms-num">∞</div>
+        <div class="ms-label">Literatuur en deskresearch</div>
+      </div>
+    </div>
+
+    <h2 class="sec-title" style="margin-top: 56px;">Vier onderzoekslijnen en een <em>praktijktoets</em>.</h2>
+
+    <div>
+      <div class="method-step">
+        <div class="ms-num-big">1</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Klantinterviews
+          </h4>
+          <p>Vaststellen of er vraag is, hoe die vraag zich uit en welke vorm van data klanten daadwerkelijk willen.</p>
+          <ul>
+            <li>Mix van woningbouw en utiliteit</li>
+            <li>Zowel middelgrote regionale als grote landelijke installateurs</li>
+            <li>Inclusief sectororganisaties voor breder marktbeeld</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">2</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            Leveranciersgesprekken
+          </h4>
+          <p>Inzicht in beschikbaarheid, drempels, kosten, 2BA-bereidheid en datakwaliteit.</p>
+          <ul>
+            <li>Vier leveranciers leveren al <span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span>- of <span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>-data</li>
+            <li>Vier leveranciers nog niet, om drempels in beeld te brengen</li>
+            <li>Spreiding over CV, warmtepompen, ventilatie, leiding en sanitair</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">3</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/></svg>
+            Interne interviews
+          </h4>
+          <p>Toetsen wat technisch en organisatorisch haalbaar is binnen Rensa.</p>
+          <ul>
+            <li>Datamanagement, kwaliteit en categorymanagement</li>
+            <li>IT en e-commerce voor systeem- en kanaalintegratie</li>
+            <li>Logistiek en aanvullende stakeholders</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">4</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Literatuur en deskresearch
+          </h4>
+          <p>De interviews plaatsen in bredere context van <span class="tt" data-tt="Corporate Sustainability Reporting Directive: Europese wetgeving die bedrijven verplicht te rapporteren over hun duurzaamheidsprestaties.">CSRD</span>, <span class="tt" data-tt="Digital Product Passport: aankomende EU-verplichting om productinformatie inclusief milieu-impact digitaal vast te leggen gedurende de volledige levenscyclus.">DPP</span>, <span class="tt" data-tt="Nationale Milieudatabase: de Nederlandse referentiedatabase voor milieuprestaties van bouwmaterialen, verplicht bij MPG-berekeningen.">NMD</span>, 2BA, <span class="tt" data-tt="Europese norm die de rekenregels voor EPD's van bouwproducten vastlegt. Verplicht voor gecertificeerde EPD's.">EN15804</span> en marktontwikkelingen.</p>
+          <ul>
+            <li>Wet- en regelgeving rond <span class="tt" data-tt="Corporate Sustainability Reporting Directive: Europese wetgeving die bedrijven verplicht te rapporteren over hun duurzaamheidsprestaties.">CSRD</span>, <span class="tt" data-tt="Digital Product Passport: aankomende EU-verplichting om productinformatie inclusief milieu-impact digitaal vast te leggen gedurende de volledige levenscyclus.">DPP</span> en <span class="tt" data-tt="Nationale Milieudatabase: de Nederlandse referentiedatabase voor milieuprestaties van bouwmaterialen, verplicht bij MPG-berekeningen.">NMD</span></li>
+            <li>Routekaarten en publicaties van Techniek Nederland en 2BA</li>
+            <li>Concurrentieontwikkelingen en marktnieuws</li>
+          </ul>
+        </div>
+      </div>
+      <div class="method-step">
+        <div class="ms-num-big">5</div>
+        <div>
+          <h4>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            GSES-pilot · INKA x Rensa, 22 april 2026
+          </h4>
+          <p>Externe praktijktoets van de routeaanbeveling. Rensa nam deel aan een pilot van het GSES-platform, opgezet samen met inkooporganisatie INKA. De resultaten zijn direct meegenomen in de routeanalyse in hoofdstuk 06 en het implementatieplan in hoofdstuk 07.</p>
+          <ul>
+            <li>Deelnemende leveranciers: Geberit, Remeha, Aalberts IPS en Afpro Filters</li>
+            <li>Getoetst: Nature Impact Score, twee datatypen (<span class="tt" data-tt="Life Cycle Assessment: een methode om de totale milieu-impact van een product te meten van grondstofwinning tot en met afdanking.">LCA</span>/<span class="tt" data-tt="Environmental Product Declaration: een gecertificeerde verklaring over de milieu-impact van een product, geverifieerd door een onafhankelijke partij.">EPD</span> en Bill of Materials) en de verificatievereiste voor externe communicatie</li>
+            <li>Bevindingen over sterktes en beperkingen zijn direct verwerkt in de gevolgenanalyse van route A</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Waarom dit beeld klopt</div>
+    <h2 class="sec-title">Waarom dit beeld <em>representatief</em> is.</h2>
+    <p class="sec-lead">Acht plus acht interviews lijken niet veel, maar de bevindingen zijn op verschillende manieren afgedekt om zeker te zijn dat ze de markt vertegenwoordigen waarin Rensa opereert. De routeaanbeveling is bovendien praktisch getoetst via de GSES-pilot met INKA, waarbij Rensa zelf deelnam als groothandel.</p>
+
+    <div class="repr">
+      <div class="repr-cell">
+        <div class="repr-mark">01</div>
+        <h4>Spreiding over klantsegmenten</h4>
+        <p>De klanten dekken het spectrum van grote landelijke installateurs tot kleinere installateurs met minder affiniteit met duurzame ontwikkelingen, utiliteit, woningbouw en sectororganisaties. De boodschap was opvallend consistent, ondanks die verschillen in omvang en duurzaamheidsbewustzijn.</p>
+      </div>
+      <div class="repr-cell">
+        <div class="repr-mark">02</div>
+        <h4>Bewuste mix in leveranciers</h4>
+        <p>De leveranciers zijn bewust gekozen op wel en nog niet leverend. Daardoor zijn zowel succesfactoren als obstakels zichtbaar geworden.</p>
+      </div>
+      <div class="repr-cell">
+        <div class="repr-mark">03</div>
+        <h4>Triangulatie met sector- en interne bronnen</h4>
+        <p>Klant- en leveranciersinput is getoetst aan brancheorganisaties en interne stakeholders. Wanneer een bevinding op meerdere plekken overeind blijft, neemt de betrouwbaarheid toe.</p>
+      </div>
+      <div class="repr-cell">
+        <div class="repr-mark">04</div>
+        <h4>Aansluiting bij literatuur en markttrends</h4>
+        <p>De richting sluit aan bij 2BA, <span class="tt" data-tt="Corporate Sustainability Reporting Directive: Europese wetgeving die bedrijven verplicht te rapporteren over hun duurzaamheidsprestaties.">CSRD</span>, Techniek Nederland en zichtbare concurrentiebewegingen. Het onderzoek staat niet los van de bredere beweging in de sector.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Beperkingen, eerlijk benoemd</div>
+    <h2 class="sec-title">Wat dit onderzoek <em>niet</em> kan.</h2>
+    <p class="sec-lead">Goede onderbouwing erkent ook waar het nog niet hard genoeg is. Drie eerlijke kanttekeningen.</p>
+
+    <div class="limits">
+      <div class="limit-row">
+        <div class="limit-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
+        </div>
+        <div>
+          <h4>Geen kwantitatieve marktmeting</h4>
+          <p>De resultaten zijn kwalitatief en richtinggevend. Een brede statistische steekproef zou de conclusies nog harder maken.</p>
+        </div>
+      </div>
+      <div class="limit-row">
+        <div class="limit-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
+        </div>
+        <div>
+          <h4>Momentopname</h4>
+          <p>Wet- en regelgeving verandert snel. De status moet binnen 6 tot 12 maanden opnieuw worden getoetst.</p>
+        </div>
+      </div>
+      <div class="limit-row">
+        <div class="limit-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
+        </div>
+        <div>
+          <h4>Uitvoering vraagt interne capaciteit</h4>
+          <p>Dit document onderbouwt het waarom en schetst het hoe in hoofdstuk 06 en 07. De daadwerkelijke uitrol hangt af van de IT- en datacapaciteit die Rensa hiervoor vrijmaakt.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Tot besluit</div>
+    <h2 class="sec-title">De kern van deze <em>business case</em>.</h2>
+    <p class="sec-lead">Rensa kan klanten helpen duurzamere keuzes te maken door betrouwbare product- en logistieke data toegankelijk te maken in het bestaande aankoopproces. De waarde zit niet in eigen interpretatie, maar in transparantie, structuur en ketenregie.</p>
+
+    <div class="conclusions">
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <div class="conc-num">Conclusie 01</div>
+        <h4>Klantretentie</h4>
+        <p>Grote installateurs verwachten de data. Niet leveren betekent dat zij alternatieven zoeken.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div class="conc-num">Conclusie 02</div>
+        <h4>Voorsprong op regelgeving</h4>
+        <p>Wie nu bouwt aan data-infrastructuur, voorkomt later paniekimplementatie.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <div class="conc-num">Conclusie 03</div>
+        <h4>Geloofwaardige ketenrol</h4>
+        <p>Transparante doorgifte versterkt Rensa als ketenregisseur.</p>
+      </div>
+      <div class="conc-cell">
+        <svg class="conc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-5 5-9 9-9 0 0 4 8 4 12s-3 4-6 4z"/></svg>
+        <div class="conc-num">Conclusie 04</div>
+        <h4>Aansluiting kernwaarden</h4>
+        <p>Dit maakt bestaande Rensa-waarden concreet: duurzaam, innovatief en samenwerkend.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-eyebrow">Documentatie na de stage</div>
+    <h2 class="sec-title">Alle bronnen zijn <em>beschikbaar</em>.</h2>
+    <p class="sec-lead">Na afloop van mijn stage is alle achterliggende documentatie te vinden bij Jur Hofland, duurzaamheidscoördinator bij Rensa. Dat omvat de interviewtranscripties, opnames, interne datarapporten en de overige bronmaterialen die ten grondslag liggen aan dit implementatieplan.</p>
+  </div>
+
+  <div class="nav-bottom">
+    <button class="nav-link" onclick="showTab('plan')"><span class="nav-link-tag">09 · Vorige</span><span class="nav-link-name">← Het plan</span></button>
+    <button class="nav-link next" onclick="showTab('welkom')"><span class="nav-link-tag">↺</span><span class="nav-link-name">Terug naar begin</span></button>
+  </div>
+</section>
+
+</main>
+
+<script>
+const tabNames = {
+  welkom: 'Welkom', samenvatting: 'Managementsamenvatting', waarde: 'De waarde', urgentie: 'De urgentie',
+  rol: "Rensa's rol", resultaten: 'Resultaten', routes: 'De routes', quickwins: 'Quick wins', plan: 'Het plan', verantwoording: 'Verantwoording'
+};
+
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.s-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector(`.s-tab[data-tab="${name}"]`).classList.add('active');
+  document.getElementById('mobileCurrent').textContent = tabNames[name];
+  closeMobileMenu();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function toggleFinding(el) { el.classList.toggle('open'); }
+
+document.querySelectorAll('.s-tab').forEach(btn => {
+  btn.addEventListener('click', () => showTab(btn.dataset.tab));
+});
+
+function toggleMobileMenu() {
+  const m = document.getElementById('mobileMenu');
+  if (m.innerHTML === '') {
+    m.innerHTML = `
+      <button class="s-tab" data-tab="welkom"><span class="s-tab-num">01</span><span>Welkom</span></button>
+      <button class="s-tab" data-tab="samenvatting"><span class="s-tab-num">02</span><span>Managementsamenvatting</span></button>
+      <button class="s-tab" data-tab="waarde"><span class="s-tab-num">03</span><span>De waarde</span></button>
+      <button class="s-tab" data-tab="urgentie"><span class="s-tab-num">04</span><span>De urgentie</span></button>
+      <button class="s-tab" data-tab="rol"><span class="s-tab-num">05</span><span>Rensa's rol</span></button>
+      <button class="s-tab" data-tab="resultaten"><span class="s-tab-num">06</span><span>Resultaten</span></button>
+      <button class="s-tab" data-tab="routes"><span class="s-tab-num">07</span><span>De routes</span></button>
+      <button class="s-tab" data-tab="quickwins"><span class="s-tab-num">08</span><span>Quick wins</span></button>
+      <button class="s-tab" data-tab="plan"><span class="s-tab-num">09</span><span>Het plan</span></button>
+      <button class="s-tab" data-tab="verantwoording"><span class="s-tab-num">10</span><span>Verantwoording</span></button>
+    `;
+    m.querySelectorAll('.s-tab').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+  }
+  m.classList.toggle('open');
+}
+function closeMobileMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+const gapData = [
+  { theme: 'CO₂ op artikelniveau', sub: 'Productdata, fase A1–A3', vraag: 90, aanbod: 45,
+    detail: 'Klantvraag is hoog en concreet. Grote installateurs willen CO₂-waarden bij elk artikel, met name voor de productiefase. <strong>Aanbod blijft achter:</strong> ongeveer de helft van de geïnterviewde leveranciers levert al EPD-data, de andere helft niet. Een externe EPD kost 500 tot 3.000 euro en moet elke vijf jaar worden vernieuwd.' },
+  { theme: 'EPD-vergelijkbaarheid', sub: 'Tussen fabrikanten', vraag: 85, aanbod: 30,
+    detail: 'Klanten willen producten objectief vergelijken. <strong>De praktijk is grilliger:</strong> verschillende verificatoren hanteren verschillende marges. Voorbeeld: twee leveranciers van vergelijkbare klimaatplafonds verschilden factor 5 in CO₂-waarde, puur door verschil in aangenomen levensduur.' },
+  { theme: 'Levensduur in data', sub: 'Levensduur per product', vraag: 70, aanbod: 25,
+    detail: 'Zonder levensduur vergelijk je appels met peren. Een product van 10 jaar met 10 kg CO₂ is minder duurzaam dan een product van 50 jaar met 20 kg CO₂. <strong>Klanten beginnen dit op te eisen,</strong> leveranciers leveren het zelden mee.' },
+  { theme: 'Transport en verpakkingen', sub: 'Scope 3 van de klant', vraag: 50, aanbod: 60,
+    detail: 'Hier is het gat klein en zelfs omgekeerd. <strong>Rensa heeft eigen transportdata</strong> (deels elektrisch, vier Lean & Green-sterren). Klanten en brancheorganisaties zien transport en verpakking als nice to have: het zwaartepunt van de uitstoot zit in de productfase zelf (A1 tot A3). Daarom ligt de focus op productdata, met transport en verpakking als waardevolle aanvulling wanneer de data beschikbaar is.' },
+  { theme: 'Levenscyclusfase B6', sub: 'Energieverbruik in gebruik', vraag: 75, aanbod: 35,
+    detail: 'Voor installatietechniek is de gebruiksfase (B6) extra relevant, daar zit vaak het grootste deel van de footprint. <strong>Brancheorganisaties wijzen hier expliciet op.</strong> Leveranciersdata over reëel verbruik in B6 is nog beperkt.' },
+  { theme: 'Integratie in offerte/ERP', sub: 'Niet alleen webshop', vraag: 95, aanbod: 20,
+    detail: 'Grote accounts bestellen via hun eigen ERP, niet via de Rensa-webshop. <strong>Data moet via die route beschikbaar zijn,</strong> zo vroeg mogelijk in het proces. Hier is de kloof het grootst en de waarde van ontsluiten dus ook het hoogst.' }
+];
+
+function buildGap() {
+  const c = document.getElementById('gapContainer');
+  if (!c) return;
+  gapData.forEach((d) => {
+    const div = document.createElement('div');
+    div.className = 'gap-row';
+    div.innerHTML = `
+      <div class="gap-theme"><h4>${d.theme}</h4><p>${d.sub}</p></div>
+      <div class="gap-line">
+        <span class="gap-marker demand" style="left:${d.vraag}%"><span class="gap-marker-tag">Vraag</span></span>
+        <span class="gap-marker supply" style="left:${d.aanbod}%"><span class="gap-marker-tag">Aanbod</span></span>
+      </div>
+      <div class="gap-toggle">+</div>
+      <div class="gap-detail">${d.detail}</div>
+    `;
+    div.addEventListener('click', () => div.classList.toggle('open'));
+    c.appendChild(div);
+  });
+}
+buildGap();
+
+const roleData = {
+  directie: { why: "De strategische kern: waarom dit nu speelt, wat het oplevert, welke route de voorkeur heeft en welke snelle winst er ligt.", ch: [["waarde","03","De waarde"],["urgentie","04","De urgentie"],["routes","07","De routes"],["quickwins","08","Quick wins"]] },
+  category: { why: "De leveranciersdruk, de routekeuze en het kennisprogramma richting leveranciers staan hier centraal.", ch: [["urgentie","04","De urgentie"],["routes","07","De routes"],["plan","09","Het plan"]] },
+  it: { why: "De technische ontsluiting via webshop en ERP, hoe en waar data zichtbaar wordt in de klantreis, en de quick wins die direct op de webshop kunnen.", ch: [["routes","07","De routes"],["quickwins","08","Quick wins"],["plan","09","Het plan"]] },
+  sales: { why: "De klantvraag, wat klanten in de gesprekken zeiden en waarmee Rensa zich nu al kan onderscheiden.", ch: [["waarde","03","De waarde"],["resultaten","06","Resultaten"],["quickwins","08","Quick wins"]] },
+  duurzaamheid: { why: "De duurzaamheidswaarde, de urgentie, de aansluiting op de keten en de Rensa-visie, plus de onderbouwing van de aanbevelingen.", ch: [["waarde","03","De waarde"],["urgentie","04","De urgentie"],["quickwins","08","Quick wins"],["verantwoording","10","Verantwoording"]] }
+};
+function selectRole(key) {
+  document.querySelectorAll('.role-pill').forEach(b => b.classList.toggle('active', b.dataset.role === key));
+  const r = roleData[key]; if (!r) return;
+  const chips = r.ch.map(c => `<button class="chapter-chip" onclick="showTab('${c[0]}')"><span class="cc-num">${c[1]}</span>${c[2]} →</button>`).join('');
+  document.getElementById('rolePanel').innerHTML =
+    `<div class="role-why">${r.why}</div>` +
+    `<div class="role-ch-label">Meest relevante onderdelen</div>` +
+    `<div class="role-chapters">${chips}</div>`;
+}
+selectRole('directie');
+</script>
+
+</body>
+</html>
